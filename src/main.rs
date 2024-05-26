@@ -60,8 +60,8 @@ fn setup_assets(
 
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
-    commands.spawn((
-        SpriteSheetBundle {
+    commands.spawn(
+        (SpriteSheetBundle {
             texture,
             atlas: TextureAtlas {
                 layout: texture_atlas_layout,
@@ -69,7 +69,6 @@ fn setup_assets(
             },
             transform: Transform::from_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
             ..Default::default()
-        },
-        Player,
-    ));
+        }),
+    );
 }
