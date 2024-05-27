@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.13.2"
+kd-tree = "0.6.0"
 rand = "0.8.5"
+typenum = "1.17.0"

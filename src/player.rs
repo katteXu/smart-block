@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use bevy::math::vec3;
 use bevy::prelude::*;
+use bevy::time::common_conditions::on_timer;
 use bevy::time::Stopwatch;
 
 use crate::state::GameState;
@@ -13,7 +16,9 @@ pub struct Player;
 pub struct ActionTimer(pub Stopwatch);
 
 #[derive(Component)]
-pub struct HandBlock;
+pub struct HandBlock {
+    pub index: usize,
+}
 
 #[derive(Component, Default, PartialEq, Eq)]
 pub enum PlayerState {
@@ -23,23 +28,34 @@ pub enum PlayerState {
     Throwing,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Copy, States)]
+pub enum HandBlockState {
+    #[default]
+    Idle,
+    Moving,
+}
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                handle_player_movement,
-                handle_block_movement,
-                hanle_throw_block,
-                hand_block_move,
+        app.init_state::<HandBlockState>()
+            .add_systems(
+                Update,
+                (
+                    (handle_player_movement, handle_block_movement)
+                        .run_if(in_state(HandBlockState::Idle)),
+                    handle_throw_block,
+                    hand_block_move
+                        .run_if(in_state(HandBlockState::Moving))
+                        .run_if(on_timer(Duration::from_secs_f32(0.02))),
+                )
+                    .run_if(in_state(GameState::InGame)),
             )
-                .run_if(in_state(GameState::InGame)),
-        );
+            .add_systems(OnExit(HandBlockState::Moving), handle_change_hand_block);
     }
 }
 
+// 玩家移动
 fn handle_player_movement(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -86,6 +102,7 @@ fn handle_player_movement(
     }
 }
 
+// 方块跟随玩家移动
 fn handle_block_movement(
     player_query: Query<&Transform, With<Player>>,
     mut hand_block_query: Query<&mut Transform, (With<HandBlock>, Without<Player>)>,
@@ -99,49 +116,38 @@ fn handle_block_movement(
     let mut hand_block_transform = hand_block_query.single_mut();
 
     hand_block_transform.translation.y = player_transform.translation.y;
+    hand_block_transform.translation.x = player_transform.translation.x - STEP_SIZE as f32;
 }
 
-fn hanle_throw_block(
-    time: Res<Time>,
+// 扔方块
+fn handle_throw_block(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut PlayerState, &mut ActionTimer), With<Player>>,
+    mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
-    if player_query.is_empty() {
-        return;
-    }
-    let (mut player_state, mut action_timer) = player_query.single_mut();
     let space_key = keyboard_input.just_pressed(KeyCode::Space);
 
     if space_key {
-        *player_state = PlayerState::Throwing;
-    } else {
-        match player_state.as_ref() {
-            PlayerState::Throwing => {
-                action_timer.0.tick(time.delta());
-                if action_timer.0.elapsed_secs() >= 0.4 {
-                    action_timer.0.reset();
-                    *player_state = PlayerState::Idle
-                }
-            }
-            _ => (),
-        }
+        next_state.set(HandBlockState::Moving);
     }
 }
 
-fn hand_block_move(
-    player_query: Query<&PlayerState, With<Player>>,
-    mut hand_block_query: Query<&mut Transform, (With<HandBlock>, Without<Player>)>,
-) {
-    if player_query.is_empty() || hand_block_query.is_empty() {
+// 移动方块
+fn hand_block_move(mut hand_block_query: Query<&mut Transform, With<HandBlock>>) {
+    if hand_block_query.is_empty() {
         return;
     }
 
-    let player_state = player_query.single();
     let mut hand_block_transform = hand_block_query.single_mut();
-    if player_state == &PlayerState::Throwing {
-        hand_block_transform.translation.x -= 16.0;
-    } else {
-        let (x, y) = PLAYER_INIT_POS;
-        hand_block_transform.translation.x = x - STEP_SIZE as f32;
+
+    hand_block_transform.translation.x -= 32.0;
+}
+
+fn handle_change_hand_block(mut query: Query<(&mut TextureAtlas, &HandBlock), With<HandBlock>>) {
+    if query.is_empty() {
+        return;
     }
+
+    let (mut texture_atlas, hand_block) = query.single_mut();
+
+    texture_atlas.index = hand_block.index as usize;
 }

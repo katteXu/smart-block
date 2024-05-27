@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::close_on_esc};
-use bevy_smart_block::animation::AnimationPlugin;
 use bevy_smart_block::block::BlockPlugin;
 use bevy_smart_block::camera::MyCameraPlugin;
+use bevy_smart_block::collision::CollisionPlugin;
 use bevy_smart_block::gui::GuiPlugin;
 use bevy_smart_block::player::PlayerPlugin;
 use bevy_smart_block::resources::ResourcesPlugin;
@@ -36,7 +36,7 @@ fn main() {
         .add_plugins(BlockPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(GuiPlugin)
-        .add_plugins(AnimationPlugin)
+        .add_plugins(CollisionPlugin)
         .add_systems(Update, close_on_esc)
         .run();
 }

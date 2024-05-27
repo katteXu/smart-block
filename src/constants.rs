@@ -19,9 +19,10 @@ pub const BG_COLOR: (u8, u8, u8) = (197, 204, 184);
 // Player
 pub const PLAYER_INIT_POS: (f32, f32) = (240.0, -290.0);
 
-// ladder
+// Kd Tree
+pub const KD_TREE_REFRESH_RATE: f32 = 0.2;
 
 // Block
-pub const BLOCK_NUM_W: usize = 6;
-pub const BLOCK_NUM_H: usize = 5;
+pub const BLOCK_NUM_W: usize = 8;
+pub const BLOCK_NUM_H: usize = 7;
 pub const BLOCK_INIT_POS: (f32, f32) = (-528.0, -290.0);

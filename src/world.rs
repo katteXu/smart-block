@@ -66,19 +66,22 @@ fn init_world(
         });
     }
 
+    let hand_block_index = rng.gen_range(8..=13);
     // 生成手上方块
     commands.spawn((
         SpriteSheetBundle {
             texture: handle.image.clone().unwrap(),
             atlas: TextureAtlas {
                 layout: handle.layout.clone().unwrap(),
-                index: rng.gen_range(8..=13),
+                index: hand_block_index,
             },
             transform: Transform::from_translation(vec3(x - STEP_SIZE as f32, y, 0.0))
                 .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
             ..Default::default()
         },
-        HandBlock,
+        HandBlock {
+            index: hand_block_index,
+        },
     ));
 
     // 生成墙面
@@ -122,12 +125,13 @@ fn init_world(
     let (x, y) = BLOCK_INIT_POS;
     for i in 0..BLOCK_NUM_W {
         for j in 0..BLOCK_NUM_H {
+            let texture_atlas_index = rng.gen_range(8..=13);
             commands.spawn((
                 SpriteSheetBundle {
                     texture: handle.image.clone().unwrap(),
                     atlas: TextureAtlas {
                         layout: handle.layout.clone().unwrap(),
-                        index: rng.gen_range(8..=13),
+                        index: texture_atlas_index,
                     },
                     transform: Transform::from_translation(vec3(
                         x + (i * STEP_SIZE) as f32,
@@ -135,9 +139,12 @@ fn init_world(
                         0.0,
                     ))
                     .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..Default::default()
+                    ..default()
                 },
-                Block,
+                Block {
+                    index: texture_atlas_index,
+                    show: true,
+                },
             ));
         }
     }
