@@ -7,6 +7,7 @@ pub mod gui;
 pub mod player;
 pub mod resources;
 pub mod state;
+pub mod wall;
 pub mod world;
 
 pub use constants::*;

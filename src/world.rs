@@ -5,11 +5,11 @@ use rand::Rng;
 use crate::state::{GameState, PlayerState};
 use crate::*;
 
-use crate::block::Block;
+use crate::block::{Block, HandBlock};
 use crate::player::Player;
+use crate::wall::Wall;
 
 use crate::animation::AnimationTimer;
-use crate::block::HandBlock;
 use crate::resources::GlobalTextAtlas;
 
 pub struct WorldPlugin;
@@ -60,7 +60,8 @@ fn init_world(
         });
     }
 
-    let hand_block_index = rng.gen_range(8..=13);
+    let hand_block_index = rng.gen_range(8..=13); // 闪电是15
+
     // 生成手上方块
     commands.spawn((
         SpriteSheetBundle {
@@ -75,42 +76,82 @@ fn init_world(
         },
         HandBlock {
             index: hand_block_index,
+            ..HandBlock::default()
         },
     ));
 
-    // 生成墙面
+    // 生成周围墙面
     for i in 1..=25 {
         for j in 0..=14 {
             if j == 0 || j == 14 {
-                commands.spawn(SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: 6,
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: 6,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            -(WW + STEP_SIZE as f32) / 2.0 + (i * STEP_SIZE) as f32,
+                            (WH - STEP_SIZE as f32) / 2.0 - (j * STEP_SIZE) as f32,
+                            1.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
                     },
-                    transform: Transform::from_translation(vec3(
-                        -(WW + STEP_SIZE as f32) / 2.0 + (i * STEP_SIZE) as f32,
-                        (WH - STEP_SIZE as f32) / 2.0 - (j * STEP_SIZE) as f32,
-                        1.0,
-                    ))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                });
+                    Wall,
+                ));
             } else if i == 1 || i >= 19 {
-                commands.spawn(SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: 6,
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: 6,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            -(WW + STEP_SIZE as f32) / 2.0 + (i * STEP_SIZE) as f32,
+                            (WH - STEP_SIZE as f32) / 2.0 - (j * STEP_SIZE) as f32,
+                            1.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
                     },
-                    transform: Transform::from_translation(vec3(
-                        -(WW + STEP_SIZE as f32) / 2.0 + (i * STEP_SIZE) as f32,
-                        (WH - STEP_SIZE as f32) / 2.0 - (j * STEP_SIZE) as f32,
-                        1.0,
-                    ))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                });
+                    Wall,
+                ));
+            }
+        }
+    }
+
+    // 测试障碍墙
+    let wall_vec2 = vec![
+        // 墙体
+        [1, 1, 1, 0],
+        [1, 1, 0, 0],
+        [1, 0, 0, 0],
+        [0, 0, 0, 0],
+    ];
+
+    for j in 0..wall_vec2.len() {
+        for i in 0..wall_vec2[j].len() {
+            if wall_vec2[i][j] == 1 {
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: 6,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            -(WW + STEP_SIZE as f32) / 2.0 + ((i + 2) * STEP_SIZE) as f32,
+                            (WH - STEP_SIZE as f32) / 2.0 - ((j + 1) * STEP_SIZE) as f32,
+                            1.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
+                    },
+                    Wall,
+                ));
             }
         }
     }

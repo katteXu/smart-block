@@ -15,6 +15,28 @@ pub struct Block {
 #[derive(Component)]
 pub struct HandBlock {
     pub index: usize,
+    pub direction: Direction,
+}
+
+impl Default for HandBlock {
+    fn default() -> Self {
+        Self {
+            index: 15,
+            direction: Direction::default(),
+        }
+    }
+}
+
+// 方向
+pub enum Direction {
+    Left,
+    Down,
+}
+
+impl Default for Direction {
+    fn default() -> Self {
+        Direction::Left
+    }
 }
 
 pub struct BlockPlugin;
@@ -32,7 +54,11 @@ impl Plugin for BlockPlugin {
             )
             .add_systems(
                 OnExit(HandBlockState::Moving),
-                (handle_block_down, handle_block_change),
+                (
+                    handle_block_down,
+                    handle_block_change,
+                    handle_reset_hand_block,
+                ),
             );
     }
 }
@@ -70,14 +96,21 @@ fn handle_block_down(
 // 处理手里方块移动
 fn handle_hand_block_move(
     time: Res<Time>,
-    mut hand_block_query: Query<&mut Transform, With<HandBlock>>,
+    mut hand_block_query: Query<(&mut Transform, &HandBlock), With<HandBlock>>,
 ) {
     if hand_block_query.is_empty() {
         return;
     }
 
-    let mut hand_block_transform = hand_block_query.single_mut();
-    hand_block_transform.translation.x -= HAND_BLOCK_SPEED * time.delta_seconds();
+    let (mut hand_block_transform, hand_block) = hand_block_query.single_mut();
+    match hand_block.direction {
+        Direction::Left => {
+            hand_block_transform.translation.x -= HAND_BLOCK_SPEED * time.delta_seconds();
+        }
+        Direction::Down => {
+            hand_block_transform.translation.y -= HAND_BLOCK_SPEED * time.delta_seconds();
+        }
+    }
 }
 
 // 处理方块变更
@@ -113,4 +146,16 @@ fn handle_block_movement(
 
     hand_block_transform.translation.y = player_transform.translation.y;
     hand_block_transform.translation.x = player_transform.translation.x - STEP_SIZE as f32;
+}
+
+// 重置手里方块
+fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
+    if query.is_empty() {
+        return;
+    }
+
+    let mut hand_block = query.single_mut();
+
+    // hand_block.index = 0;
+    hand_block.direction = Direction::Left;
 }
