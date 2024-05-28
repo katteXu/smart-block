@@ -1,8 +1,5 @@
-use std::time::Duration;
-
 use bevy::math::vec3;
 use bevy::prelude::*;
-use bevy::time::common_conditions::on_timer;
 use bevy::time::Stopwatch;
 
 use crate::state::GameState;
@@ -45,9 +42,7 @@ impl Plugin for PlayerPlugin {
                     (handle_player_movement, handle_block_movement)
                         .run_if(in_state(HandBlockState::Idle)),
                     handle_throw_block,
-                    hand_block_move
-                        .run_if(in_state(HandBlockState::Moving))
-                        .run_if(on_timer(Duration::from_secs_f32(0.02))),
+                    hand_block_move.run_if(in_state(HandBlockState::Moving)),
                 )
                     .run_if(in_state(GameState::InGame)),
             )
@@ -132,16 +127,16 @@ fn handle_throw_block(
 }
 
 // 移动方块
-fn hand_block_move(mut hand_block_query: Query<&mut Transform, With<HandBlock>>) {
+fn hand_block_move(time: Res<Time>, mut hand_block_query: Query<&mut Transform, With<HandBlock>>) {
     if hand_block_query.is_empty() {
         return;
     }
 
     let mut hand_block_transform = hand_block_query.single_mut();
-
-    hand_block_transform.translation.x -= 32.0;
+    hand_block_transform.translation.x -= HAND_BLOCK_SPEED * time.delta_seconds();
 }
 
+// 处理方块变更
 fn handle_change_hand_block(mut query: Query<(&mut TextureAtlas, &HandBlock), With<HandBlock>>) {
     if query.is_empty() {
         return;

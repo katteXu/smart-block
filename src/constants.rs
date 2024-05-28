@@ -26,3 +26,5 @@ pub const KD_TREE_REFRESH_RATE: f32 = 0.2;
 pub const BLOCK_NUM_W: usize = 8;
 pub const BLOCK_NUM_H: usize = 7;
 pub const BLOCK_INIT_POS: (f32, f32) = (-528.0, -290.0);
+
+pub const HAND_BLOCK_SPEED: f32 = 1280.0;
