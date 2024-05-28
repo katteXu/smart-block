@@ -23,8 +23,8 @@ pub const PLAYER_INIT_POS: (f32, f32) = (240.0, -290.0);
 pub const KD_TREE_REFRESH_RATE: f32 = 0.2;
 
 // Block
-pub const BLOCK_NUM_W: usize = 8;
-pub const BLOCK_NUM_H: usize = 7;
+pub const BLOCK_NUM_W: usize = 4;
+pub const BLOCK_NUM_H: usize = 4;
 pub const BLOCK_INIT_POS: (f32, f32) = (-528.0, -290.0);
 
 pub const HAND_BLOCK_SPEED: f32 = 1280.0;

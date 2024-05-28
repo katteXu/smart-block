@@ -3,11 +3,9 @@ use std::time::Duration;
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use kd_tree::{KdPoint, KdTree};
 
-use crate::state::GameState;
+use crate::block::{Block, HandBlock};
+use crate::state::{GameState, HandBlockState};
 use crate::*;
-
-use crate::block::Block;
-use crate::player::{HandBlock, HandBlockState};
 
 #[derive(Component, Debug)]
 pub struct Collidable {
@@ -31,6 +29,9 @@ impl KdPoint for Collidable {
 #[derive(Resource)]
 pub struct BlockKdTree(pub KdTree<Collidable>);
 
+#[derive(Resource)]
+struct IsEliminate(bool);
+
 impl Default for BlockKdTree {
     fn default() -> Self {
         Self(KdTree::build_by_ordered_float(vec![]))
@@ -41,30 +42,35 @@ pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(BlockKdTree::default()).add_systems(
-            Update,
-            (
-                handle_block_collision.run_if(in_state(HandBlockState::Moving)),
-                update_block_kd_tree
-                    .run_if(in_state(HandBlockState::Idle))
-                    .run_if(on_timer(Duration::from_secs_f32(KD_TREE_REFRESH_RATE))),
-            )
-                .run_if(in_state(GameState::InGame)),
-        );
+        app.insert_resource(BlockKdTree::default())
+            .insert_resource(IsEliminate(false))
+            .add_systems(
+                Update,
+                (
+                    handle_block_collision.run_if(in_state(HandBlockState::Moving)),
+                    update_block_kd_tree
+                        .run_if(in_state(HandBlockState::Idle))
+                        .run_if(on_timer(Duration::from_secs_f32(KD_TREE_REFRESH_RATE))),
+                )
+                    .run_if(in_state(GameState::InGame)),
+            );
     }
 }
 
+// 更新方块kd tree
 fn update_block_kd_tree(
     mut tree: ResMut<BlockKdTree>,
-    block_query: Query<(&Transform, Entity), With<Block>>,
+    block_query: Query<(&Transform, Entity, &Block), With<Block>>,
 ) {
     let mut items = Vec::new();
 
-    for (t, e) in block_query.iter() {
-        items.push(Collidable {
-            pos: t.translation.truncate(),
-            entity: e,
-        });
+    for (t, e, block) in block_query.iter() {
+        if block.show {
+            items.push(Collidable {
+                pos: t.translation.truncate(),
+                entity: e,
+            });
+        }
     }
 
     tree.0 = KdTree::build_by_ordered_float(items);
@@ -73,6 +79,7 @@ fn update_block_kd_tree(
 // 处理碰撞
 fn handle_block_collision(
     tree: ResMut<BlockKdTree>,
+    mut is_eliminate: ResMut<IsEliminate>,
     mut hand_block_query: Query<(&mut Transform, &mut HandBlock), With<HandBlock>>,
     mut block_query: Query<(&mut Transform, &mut Block), (With<Block>, Without<HandBlock>)>,
     mut next_state: ResMut<NextState<HandBlockState>>,
@@ -88,10 +95,14 @@ fn handle_block_collision(
     for b_e in blocks {
         if let Ok((mut b_t, mut b_b)) = block_query.get_mut(b_e.entity) {
             if b_b.index == hand_block.index {
-                b_t.translation.y += 16.0;
+                b_t.translation.y += 12.0;
                 b_b.show = false;
-            } else {
-                hand_block.index = b_b.index;
+                is_eliminate.0 = true;
+            } else if b_b.show {
+                if is_eliminate.0 {
+                    (hand_block.index, b_b.index) = (b_b.index, hand_block.index);
+                    is_eliminate.0 = false;
+                }
                 next_state.set(HandBlockState::Idle);
             }
         }

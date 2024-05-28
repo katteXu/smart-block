@@ -1,19 +1,16 @@
 use bevy::math::vec3;
 use bevy::prelude::*;
-use bevy::time::Stopwatch;
 use rand::Rng;
 
-use crate::state::GameState;
+use crate::state::{GameState, PlayerState};
 use crate::*;
 
 use crate::block::Block;
-use crate::player::HandBlock;
 use crate::player::Player;
 
-use self::animation::AnimationTimer;
-use self::player::ActionTimer;
-use self::player::PlayerState;
-use self::resources::GlobalTextAtlas;
+use crate::animation::AnimationTimer;
+use crate::block::HandBlock;
+use crate::resources::GlobalTextAtlas;
 
 pub struct WorldPlugin;
 
@@ -46,7 +43,6 @@ fn init_world(
         },
         Player,
         PlayerState::default(),
-        ActionTimer(Stopwatch::new()),
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
     ));
 

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    player::{Player, PlayerState},
-    state::GameState,
+    player::Player,
+    state::{GameState, PlayerState},
 };
 
 #[derive(Component)]
@@ -29,7 +29,6 @@ fn animate_timer_tick(
 }
 
 fn player_animation(
-    time: Res<Time>,
     mut query: Query<(&mut TextureAtlas, &PlayerState, &AnimationTimer), With<Player>>,
 ) {
     if query.is_empty() {
