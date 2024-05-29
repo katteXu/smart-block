@@ -66,28 +66,26 @@ impl Plugin for BlockPlugin {
 // 处理方块消除 并 下落
 fn handle_block_down(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, &mut Block, Entity, &mut TextureAtlas), With<Block>>,
+    mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
 ) {
     if query.is_empty() || hand_block_query.is_empty() {
         return;
     }
 
-    let hand_block_transform = hand_block_query.single();
     let mut remove_block_pos = vec![];
     // 消除方块
-    for (transform, mut block, entity, mut texture_atlas) in query.iter_mut() {
+    for (transform, block, entity) in query.iter_mut() {
         if !block.show {
             remove_block_pos.push(transform.translation.clone());
             commands.entity(entity).despawn();
-            // texture_atlas.index = 14;
         }
     }
     // 消除方块后，下落
     for transform in remove_block_pos {
-        let mut remove_t = transform.truncate();
+        let remove_t = transform.truncate();
 
-        for (mut transform, mut block, _, mut texture_atlas) in query.iter_mut() {
+        for (mut transform, block, _) in query.iter_mut() {
             if block.show
                 && remove_t.x == transform.translation.x
                 && transform.translation.y >= remove_t.y

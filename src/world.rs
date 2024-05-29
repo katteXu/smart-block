@@ -1,5 +1,6 @@
 use bevy::math::vec3;
 use bevy::prelude::*;
+#[allow(unused)]
 use rand::Rng;
 
 use crate::state::{GameState, PlayerState};
@@ -28,7 +29,7 @@ fn init_world(
     handle: ResMut<GlobalTextAtlas>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    let mut rng = rand::thread_rng();
+    let mut _rng = rand::thread_rng();
 
     // 生成玩家
     let (x, y) = PLAYER_INIT_POS;

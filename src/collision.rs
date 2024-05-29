@@ -164,7 +164,7 @@ fn handle_block_collision(
     for b_e in blocks {
         if let Ok((mut b_t, mut b_b)) = block_query.get_mut(b_e.entity) {
             if b_b.index == hand_block.index {
-                // b_t.translation.y += 12.0;
+                b_t.translation.y += 12.0;
                 b_b.show = false;
                 is_eliminate.0 = true;
             } else if b_b.show {
@@ -204,14 +204,14 @@ fn handle_block_wall_collision(
 // 处理地面碰撞
 fn handle_block_ground_collision(
     tree: ResMut<GroundKdTree>,
-    hand_block_query: Query<(&Transform, &mut HandBlock), With<HandBlock>>,
+    hand_block_query: Query<&Transform, With<HandBlock>>,
     mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
     if hand_block_query.is_empty() {
         return;
     }
 
-    let (transform, mut hand_block) = hand_block_query.single();
+    let transform = hand_block_query.single();
     let pos = transform.translation.truncate();
     let grounds = tree.0.within_radius(&[pos.x, pos.y], 42.0);
 
