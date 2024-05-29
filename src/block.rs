@@ -39,11 +39,17 @@ impl Default for Direction {
     }
 }
 
+#[derive(Event)]
+struct BlockDownEvent {
+    pub remove_block_pos: Vec2,
+}
+
 pub struct BlockPlugin;
 
 impl Plugin for BlockPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<HandBlockState>()
+            .add_event::<BlockDownEvent>()
             .add_systems(
                 Update,
                 (
@@ -53,9 +59,13 @@ impl Plugin for BlockPlugin {
                     .run_if(in_state(GameState::InGame)),
             )
             .add_systems(
+                Update,
+                handle_block_down.run_if(in_state(GameState::InGame)),
+            )
+            .add_systems(
                 OnExit(HandBlockState::Moving),
                 (
-                    handle_block_down,
+                    handle_block_remove,
                     handle_block_change,
                     handle_reset_hand_block,
                 ),
@@ -63,9 +73,10 @@ impl Plugin for BlockPlugin {
     }
 }
 
-// 处理方块消除 并 下落
-fn handle_block_down(
+// 处理方块消除
+fn handle_block_remove(
     mut commands: Commands,
+    mut events: EventWriter<BlockDownEvent>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
 ) {
@@ -73,22 +84,34 @@ fn handle_block_down(
         return;
     }
 
-    let mut remove_block_pos = vec![];
     // 消除方块
     for (transform, block, entity) in query.iter_mut() {
         if !block.show {
-            remove_block_pos.push(transform.translation.clone());
             commands.entity(entity).despawn();
+
+            // 触发方块下落事件
+            events.send(BlockDownEvent {
+                remove_block_pos: transform.translation.truncate(),
+            });
         }
     }
-    // 消除方块后，下落
-    for transform in remove_block_pos {
-        let remove_t = transform.truncate();
+}
 
-        for (mut transform, block, _) in query.iter_mut() {
+// 处理方块下落
+fn handle_block_down(
+    mut events: EventReader<BlockDownEvent>,
+    mut query: Query<(&mut Transform, &Block), With<Block>>,
+) {
+    if query.is_empty() {
+        return;
+    }
+
+    for e in events.read() {
+        let remove_block_pos = e.remove_block_pos;
+        for (mut transform, block) in query.iter_mut() {
             if block.show
-                && remove_t.x == transform.translation.x
-                && transform.translation.y >= remove_t.y
+                && transform.translation.x == remove_block_pos.x
+                && transform.translation.y >= remove_block_pos.y
             {
                 transform.translation.y -= STEP_SIZE as f32;
             }

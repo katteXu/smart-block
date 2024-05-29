@@ -150,7 +150,7 @@ fn handle_block_collision(
     tree: ResMut<BlockKdTree>,
     mut is_eliminate: ResMut<IsEliminate>,
     mut hand_block_query: Query<(&mut Transform, &mut HandBlock), With<HandBlock>>,
-    mut block_query: Query<(&mut Transform, &mut Block), (With<Block>, Without<HandBlock>)>,
+    mut block_query: Query<&mut Block, (With<Block>, Without<HandBlock>)>,
     mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
     if hand_block_query.is_empty() || block_query.is_empty() {
@@ -162,9 +162,8 @@ fn handle_block_collision(
     let blocks = tree.0.within_radius(&[pos.x, pos.y], 48.0);
 
     for b_e in blocks {
-        if let Ok((mut b_t, mut b_b)) = block_query.get_mut(b_e.entity) {
+        if let Ok(mut b_b) = block_query.get_mut(b_e.entity) {
             if b_b.index == hand_block.index {
-                b_t.translation.y += 12.0;
                 b_b.show = false;
                 is_eliminate.0 = true;
             } else if b_b.show {
