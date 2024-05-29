@@ -15,11 +15,15 @@ use crate::resources::GlobalTextAtlas;
 
 use self::wall::Ground;
 
+#[derive(Component)]
+pub struct GameEntity;
+
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::GameInit), init_world);
+        app.add_systems(OnEnter(GameState::GameInit), init_world)
+            .add_systems(OnExit(GameState::InGame), despawn_all_game_entities);
     }
 }
 
@@ -47,20 +51,24 @@ fn init_world(
         Player,
         PlayerState::default(),
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+        GameEntity,
     ));
 
     // 生成梯子
     for i in 0..100 {
-        commands.spawn(SpriteSheetBundle {
-            texture: handle.image.clone().unwrap(),
-            atlas: TextureAtlas {
-                layout: handle.layout.clone().unwrap(),
-                index: 4,
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: handle.image.clone().unwrap(),
+                atlas: TextureAtlas {
+                    layout: handle.layout.clone().unwrap(),
+                    index: 4,
+                },
+                transform: Transform::from_translation(vec3(x, y + (i * STEP_SIZE) as f32, 0.0))
+                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                ..default()
             },
-            transform: Transform::from_translation(vec3(x, y + (i * STEP_SIZE) as f32, 0.0))
-                .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-            ..default()
-        });
+            GameEntity,
+        ));
     }
 
     let hand_block_index = rng.gen_range(BLOCK_DISPLAY_RANGE); // HAND_BLOCK_INDEX; // 闪电是15
@@ -81,6 +89,7 @@ fn init_world(
             index: hand_block_index,
             ..HandBlock::default()
         },
+        GameEntity,
     ));
 
     // 生成周围墙面
@@ -104,6 +113,7 @@ fn init_world(
                     },
                     // Wall,
                     Ground,
+                    GameEntity,
                 ));
             } else if i == 1 || i >= 19 {
                 commands.spawn((
@@ -122,6 +132,7 @@ fn init_world(
                         ..default()
                     },
                     Wall,
+                    GameEntity,
                 ));
             }
         }
@@ -155,6 +166,7 @@ fn init_world(
                         ..default()
                     },
                     Wall,
+                    GameEntity,
                 ));
             }
         }
@@ -184,6 +196,7 @@ fn init_world(
                     index: texture_atlas_index,
                     show: true,
                 },
+                GameEntity,
             ));
         }
     }
@@ -213,10 +226,20 @@ fn init_world(
     //                     index: index,
     //                     show: true,
     //                 },
+    //                 GameEntity
     //             ));
     //         }
     //     }
     // }
 
     next_state.set(GameState::InGame);
+}
+
+fn despawn_all_game_entities(
+    mut commands: Commands,
+    game_entities: Query<Entity, With<GameEntity>>,
+) {
+    for entity in game_entities.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
 }

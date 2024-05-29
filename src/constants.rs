@@ -32,6 +32,31 @@ pub const BLOCK_DISPLAY_RANGE: RangeInclusive<usize> = 8..=11;
 pub const HAND_BLOCK_SPEED: f32 = 1280.0;
 pub const HAND_BLOCK_INDEX: usize = 8;
 
+// UI text
+pub const SCORE_TEXT: &str = "SCORE";
+pub const BLOCK_TEXT: &str = "BLOCK";
+pub const CLEAR_TEXT: &str = "CLEAR";
+pub const STAGE_TEXT: &str = "STAGE";
+
+// UI SCORE
+pub const SCORE_BLOCK_WIDTH: f32 = 220.0;
+pub const SCORE_BLOCK_POS: (f32, f32) = (48.0, 18.0);
+
+// UI CLEAR
+pub const CLEAR_BLOCK_POS: (f32, f32) = (48.0, 96.0);
+
+// UI BLOCK
+pub const BLOCK_BLOCK_POS: (f32, f32) = (48.0, 240.0);
+
+// UI COUNT_DOWN
+pub const COUNT_DOWN_BLOCK_POS: (f32, f32) = (48.0, 384.0);
+pub const COUNT_DOWN_SEC: f32 = 180.0;
+// UI STAGE
+pub const STAGE_BLOCK_POS: (f32, f32) = (48.0, 528.0);
+
+pub const RIGHT_BLOCK_WIDTH: f32 = 240.0;
+pub const RIGHT_BLOCK_HEIGHT: f32 = 96.0;
+
 //
 // 8-13
 pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [

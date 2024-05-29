@@ -5,6 +5,8 @@ use crate::*;
 
 use crate::player::Player;
 
+use crate::gui::TextScore;
+
 // Block
 #[derive(Component, Debug)]
 pub struct Block {
@@ -76,25 +78,31 @@ impl Plugin for BlockPlugin {
 // 处理方块消除
 fn handle_block_remove(
     mut commands: Commands,
+    mut score_query: Query<&mut TextScore, With<TextScore>>,
     mut events: EventWriter<BlockDownEvent>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
 ) {
-    if query.is_empty() || hand_block_query.is_empty() {
+    if query.is_empty() || hand_block_query.is_empty() || score_query.is_empty() {
         return;
     }
+    let mut text_score = score_query.single_mut();
+    let mut score = 0;
 
     // 消除方块
     for (transform, block, entity) in query.iter_mut() {
         if !block.show {
             commands.entity(entity).despawn();
 
+            score += 100;
             // 触发方块下落事件
             events.send(BlockDownEvent {
                 remove_block_pos: transform.translation.truncate(),
             });
         }
     }
+
+    text_score.once_score = score;
 }
 
 // 处理方块下落

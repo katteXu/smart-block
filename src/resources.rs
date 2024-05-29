@@ -47,5 +47,5 @@ fn load_assets(
     // 资源网格
     handle.layout = Some(texture_atlas_layouts.add(layout));
 
-    next_state.set(GameState::GameInit);
+    next_state.set(GameState::MainMenu);
 }

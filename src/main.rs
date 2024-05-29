@@ -3,6 +3,7 @@ use bevy_smart_block::block::BlockPlugin;
 use bevy_smart_block::camera::MyCameraPlugin;
 use bevy_smart_block::collision::CollisionPlugin;
 use bevy_smart_block::gui::GuiPlugin;
+use bevy_smart_block::main_menu::MainMenuPlugin;
 use bevy_smart_block::player::PlayerPlugin;
 use bevy_smart_block::resources::ResourcesPlugin;
 use bevy_smart_block::state::GameState;
@@ -17,6 +18,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
+                        title: String::from("Smart Block"),
                         resizable: false,
                         focused: true,
                         resolution: (WW, WH).into(),
@@ -29,7 +31,7 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb_u8(
             BG_COLOR.0, BG_COLOR.1, BG_COLOR.2,
         )))
-        // add plugins
+        .add_plugins(MainMenuPlugin)
         .add_plugins(MyCameraPlugin)
         .add_plugins(ResourcesPlugin)
         .add_plugins(WorldPlugin)
