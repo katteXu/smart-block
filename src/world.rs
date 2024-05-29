@@ -12,6 +12,8 @@ use crate::wall::Wall;
 use crate::animation::AnimationTimer;
 use crate::resources::GlobalTextAtlas;
 
+use self::wall::Ground;
+
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
@@ -60,7 +62,7 @@ fn init_world(
         });
     }
 
-    let hand_block_index = rng.gen_range(8..=13); // 闪电是15
+    let hand_block_index = HAND_BLOCK_INDEX; //rng.gen_range(BLOCK_DISPLAY_RANGE); // 闪电是15
 
     // 生成手上方块
     commands.spawn((
@@ -99,7 +101,8 @@ fn init_world(
                         .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
                         ..default()
                     },
-                    Wall,
+                    // Wall,
+                    Ground,
                 ));
             } else if i == 1 || i >= 19 {
                 commands.spawn((
@@ -158,29 +161,59 @@ fn init_world(
 
     // 生成方块组
     let (x, y) = BLOCK_INIT_POS;
-    for i in 0..BLOCK_NUM_W {
-        for j in 0..BLOCK_NUM_H {
-            let texture_atlas_index = rng.gen_range(8..=13);
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: texture_atlas_index,
+    // for j in 0..BLOCK_NUM_H {
+    //     for i in 0..BLOCK_NUM_W {
+    //         let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
+    //         commands.spawn((
+    //             SpriteSheetBundle {
+    //                 texture: handle.image.clone().unwrap(),
+    //                 atlas: TextureAtlas {
+    //                     layout: handle.layout.clone().unwrap(),
+    //                     index: texture_atlas_index,
+    //                 },
+    //                 transform: Transform::from_translation(vec3(
+    //                     x + (i * STEP_SIZE) as f32,
+    //                     y + (j * STEP_SIZE) as f32,
+    //                     0.0,
+    //                 ))
+    //                 .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+    //                 ..default()
+    //             },
+    //             Block {
+    //                 index: texture_atlas_index,
+    //                 show: true,
+    //             },
+    //         ));
+    //     }
+    // }
+
+    // 测试固定渲染
+    let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
+    for pos_y in 0..group.len() {
+        for pos_x in 0..group[pos_y].len() {
+            let index = group[pos_y][pos_x];
+            if index > 0 {
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: index,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            x + (pos_x * STEP_SIZE) as f32,
+                            y + (pos_y * STEP_SIZE) as f32,
+                            0.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
                     },
-                    transform: Transform::from_translation(vec3(
-                        x + (i * STEP_SIZE) as f32,
-                        y + (j * STEP_SIZE) as f32,
-                        0.0,
-                    ))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                },
-                Block {
-                    index: texture_atlas_index,
-                    show: true,
-                },
-            ));
+                    Block {
+                        index: index,
+                        show: true,
+                    },
+                ));
+            }
         }
     }
 

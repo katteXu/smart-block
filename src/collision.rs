@@ -7,8 +7,8 @@ use crate::block::{Block, HandBlock};
 use crate::state::{GameState, HandBlockState};
 use crate::*;
 
-use self::block::Direction;
-use self::wall::Wall;
+use crate::block::Direction;
+use crate::wall::{Ground, Wall};
 
 #[derive(Component, Debug)]
 pub struct Collidable {
@@ -29,6 +29,7 @@ impl KdPoint for Collidable {
     }
 }
 
+// 方块树
 #[derive(Resource)]
 pub struct BlockKdTree(pub KdTree<Collidable>);
 
@@ -38,6 +39,7 @@ impl Default for BlockKdTree {
     }
 }
 
+// 墙面树
 #[derive(Resource)]
 pub struct WallKdTree(pub KdTree<Collidable>);
 
@@ -46,6 +48,17 @@ impl Default for WallKdTree {
         Self(KdTree::build_by_ordered_float(vec![]))
     }
 }
+
+// 地面树
+#[derive(Resource)]
+pub struct GroundKdTree(pub KdTree<Collidable>);
+
+impl Default for GroundKdTree {
+    fn default() -> Self {
+        Self(KdTree::build_by_ordered_float(vec![]))
+    }
+}
+
 #[derive(Resource)]
 struct IsEliminate(bool);
 
@@ -55,12 +68,20 @@ impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BlockKdTree::default())
             .insert_resource(WallKdTree::default())
+            .insert_resource(GroundKdTree::default())
             .insert_resource(IsEliminate(false))
-            .add_systems(OnEnter(GameState::InGame), spawn_wall_kd_tree)
+            .add_systems(
+                OnEnter(GameState::InGame),
+                (spawn_wall_kd_tree, spawn_ground_kd_tree),
+            )
             .add_systems(
                 Update,
                 (
-                    (handle_block_collision, handle_block_wall_collision)
+                    (
+                        handle_block_collision,
+                        handle_block_wall_collision,
+                        handle_block_ground_collision,
+                    )
                         .run_if(in_state(HandBlockState::Moving)),
                     update_block_kd_tree
                         .run_if(in_state(HandBlockState::Idle))
@@ -71,6 +92,7 @@ impl Plugin for CollisionPlugin {
     }
 }
 
+// 生成墙面kd tree
 fn spawn_wall_kd_tree(
     mut tree: ResMut<WallKdTree>,
     wall_query: Query<(&Transform, Entity), With<Wall>>,
@@ -78,6 +100,23 @@ fn spawn_wall_kd_tree(
     let mut items = Vec::new();
 
     for (t, e) in wall_query.iter() {
+        items.push(Collidable {
+            pos: t.translation.truncate(),
+            entity: e,
+        });
+    }
+
+    tree.0 = KdTree::build_by_ordered_float(items);
+}
+
+// 生成地面kd tree
+fn spawn_ground_kd_tree(
+    mut tree: ResMut<GroundKdTree>,
+    ground_query: Query<(&Transform, Entity), With<Ground>>,
+) {
+    let mut items = Vec::new();
+
+    for (t, e) in ground_query.iter() {
         items.push(Collidable {
             pos: t.translation.truncate(),
             entity: e,
@@ -125,7 +164,7 @@ fn handle_block_collision(
     for b_e in blocks {
         if let Ok((mut b_t, mut b_b)) = block_query.get_mut(b_e.entity) {
             if b_b.index == hand_block.index {
-                b_t.translation.y += 12.0;
+                // b_t.translation.y += 12.0;
                 b_b.show = false;
                 is_eliminate.0 = true;
             } else if b_b.show {
@@ -146,7 +185,7 @@ fn handle_block_wall_collision(
     wall_query: Query<&Transform, (With<Wall>, Without<HandBlock>)>,
     mut _next_state: ResMut<NextState<HandBlockState>>,
 ) {
-    if hand_block_query.is_empty() {
+    if hand_block_query.is_empty() || wall_query.is_empty() {
         return;
     }
 
@@ -159,5 +198,24 @@ fn handle_block_wall_collision(
             hand_block.direction = Direction::Down;
             transform.translation.x = w_t.translation.x + STEP_SIZE as f32;
         }
+    }
+}
+
+// 处理地面碰撞
+fn handle_block_ground_collision(
+    tree: ResMut<GroundKdTree>,
+    hand_block_query: Query<(&Transform, &mut HandBlock), With<HandBlock>>,
+    mut next_state: ResMut<NextState<HandBlockState>>,
+) {
+    if hand_block_query.is_empty() {
+        return;
+    }
+
+    let (transform, mut hand_block) = hand_block_query.single();
+    let pos = transform.translation.truncate();
+    let grounds = tree.0.within_radius(&[pos.x, pos.y], 42.0);
+
+    for _ in grounds {
+        next_state.set(HandBlockState::Idle);
     }
 }

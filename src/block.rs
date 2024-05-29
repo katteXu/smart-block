@@ -66,7 +66,7 @@ impl Plugin for BlockPlugin {
 // 处理方块消除 并 下落
 fn handle_block_down(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, &Block, Entity), With<Block>>,
+    mut query: Query<(&mut Transform, &mut Block, Entity, &mut TextureAtlas), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
 ) {
     if query.is_empty() || hand_block_query.is_empty() {
@@ -74,21 +74,26 @@ fn handle_block_down(
     }
 
     let hand_block_transform = hand_block_query.single();
-    let mut items_x = Vec::new();
-
+    let mut remove_block_pos = vec![];
     // 消除方块
-    for (transform, block, entity) in query.iter() {
+    for (transform, mut block, entity, mut texture_atlas) in query.iter_mut() {
         if !block.show {
-            items_x.push(transform.translation.x);
+            remove_block_pos.push(transform.translation.clone());
             commands.entity(entity).despawn();
+            // texture_atlas.index = 14;
         }
     }
+    // 消除方块后，下落
+    for transform in remove_block_pos {
+        let mut remove_t = transform.truncate();
 
-    for (mut transform, _, _) in query.iter_mut() {
-        if items_x.contains(&transform.translation.x)
-            && transform.translation.y > hand_block_transform.translation.y
-        {
-            transform.translation.y -= STEP_SIZE as f32;
+        for (mut transform, mut block, _, mut texture_atlas) in query.iter_mut() {
+            if block.show
+                && remove_t.x == transform.translation.x
+                && transform.translation.y >= remove_t.y
+            {
+                transform.translation.y -= STEP_SIZE as f32;
+            }
         }
     }
 }
@@ -156,6 +161,5 @@ fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
 
     let mut hand_block = query.single_mut();
 
-    // hand_block.index = 0;
     hand_block.direction = Direction::Left;
 }
