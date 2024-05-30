@@ -180,6 +180,7 @@ fn handle_block_collision(
 // 处理墙体碰撞
 fn handle_block_wall_collision(
     tree: ResMut<WallKdTree>,
+    mut is_eliminate: ResMut<IsEliminate>,
     mut hand_block_query: Query<(&mut Transform, &mut HandBlock), With<HandBlock>>,
     wall_query: Query<&Transform, (With<Wall>, Without<HandBlock>)>,
     mut _next_state: ResMut<NextState<HandBlockState>>,
@@ -196,6 +197,7 @@ fn handle_block_wall_collision(
         if let Ok(w_t) = wall_query.get(w_e.entity) {
             hand_block.direction = Direction::Down;
             transform.translation.x = w_t.translation.x + STEP_SIZE as f32;
+            is_eliminate.0 = false;
         }
     }
 }
@@ -203,6 +205,7 @@ fn handle_block_wall_collision(
 // 处理地面碰撞
 fn handle_block_ground_collision(
     tree: ResMut<GroundKdTree>,
+    mut is_eliminate: ResMut<IsEliminate>,
     hand_block_query: Query<&Transform, With<HandBlock>>,
     mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
@@ -216,5 +219,6 @@ fn handle_block_ground_collision(
 
     for _ in grounds {
         next_state.set(HandBlockState::Idle);
+        is_eliminate.0 = false;
     }
 }

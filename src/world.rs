@@ -71,7 +71,7 @@ fn init_world(
         ));
     }
 
-    let hand_block_index = rng.gen_range(BLOCK_DISPLAY_RANGE); // HAND_BLOCK_INDEX; // 闪电是15
+    let hand_block_index = HAND_BLOCK_INDEX; // rng.gen_range(BLOCK_DISPLAY_RANGE); // HAND_BLOCK_INDEX; // 闪电是15
 
     // 生成手上方块
     commands.spawn((
@@ -226,7 +226,7 @@ fn init_world(
     //                     index: index,
     //                     show: true,
     //                 },
-    //                 GameEntity
+    //                 GameEntity,
     //             ));
     //         }
     //     }

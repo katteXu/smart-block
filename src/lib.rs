@@ -1,4 +1,5 @@
 pub mod animation;
+pub mod arrow;
 pub mod block;
 pub mod camera;
 pub mod collision;

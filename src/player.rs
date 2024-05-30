@@ -4,6 +4,8 @@ use bevy::prelude::*;
 use crate::state::{GameState, HandBlockState, PlayerState};
 use crate::*;
 
+use self::arrow::ArrowPlugin;
+
 // Player
 #[derive(Component)]
 pub struct Player;
@@ -19,7 +21,8 @@ impl Plugin for PlayerPlugin {
                 handle_throw_block,
             )
                 .run_if(in_state(GameState::InGame)),
-        );
+        )
+        .add_plugins(ArrowPlugin);
     }
 }
 
@@ -43,7 +46,7 @@ fn handle_player_movement(
     let mut delta = Vec3::ZERO;
 
     // 只有上下操作
-    if w_key && player_transform.translation.y < -PLAYER_INIT_POS.1 - STEP_SIZE as f32 {
+    if w_key && player_transform.translation.y <= -PLAYER_INIT_POS.1 - STEP_SIZE as f32 {
         delta.y += 1.0;
     }
     if s_key && player_transform.translation.y > PLAYER_INIT_POS.1 {
