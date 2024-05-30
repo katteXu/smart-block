@@ -34,7 +34,7 @@ pub const BLOCK_NUM_H: usize = 6;
 pub const BLOCK_INIT_POS: (f32, f32) = (-528.0, -288.0);
 pub const BLOCK_DISPLAY_RANGE: RangeInclusive<usize> = 8..=11;
 pub const HAND_BLOCK_SPEED: f32 = 1280.0;
-pub const HAND_BLOCK_INDEX: usize = 8;
+pub const HAND_BLOCK_INDEX: usize = 9;
 
 // UI text
 pub const SCORE_TEXT: &str = "SCORE";
@@ -65,13 +65,13 @@ pub const RIGHT_BLOCK_HEIGHT: f32 = 96.0;
 // 8-13
 pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [
     // stage1
-    // [13, 11, 11, 11, 0],
-    // [8, 13, 13, 13, 0],
-    // [9, 9, 9, 9, 0],
-    // [11, 8, 8, 8, 0],
+    [13, 11, 11, 11, 0],
+    [8, 13, 13, 13, 0],
+    [9, 9, 9, 9, 0],
+    [11, 8, 8, 8, 0],
     // stage2
-    [13, 8, 8, 8, 0],
-    [11, 8, 13, 13, 0],
-    [9, 8, 8, 8, 0],
-    [13, 8, 13, 13, 0],
+    // [13, 8, 8, 8, 0],
+    // [11, 8, 13, 13, 0],
+    // [9, 8, 8, 8, 0],
+    // [13, 8, 13, 13, 0],
 ];
