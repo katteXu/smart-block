@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bevy::prelude::*;
 
 use crate::state::{GameState, HandBlockState};
@@ -62,7 +64,7 @@ impl Plugin for BlockPlugin {
             )
             .add_systems(
                 Update,
-                handle_block_down.run_if(in_state(GameState::InGame)),
+                (handle_block_down).run_if(in_state(GameState::InGame)),
             )
             .add_systems(
                 OnExit(HandBlockState::Moving),
@@ -191,4 +193,41 @@ fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
     let mut hand_block = query.single_mut();
 
     hand_block.direction = Direction::Left;
+}
+
+// TODO: 处理没有可消除方块逻辑
+fn handle_none_block(
+    block_query: Query<(&Transform, &Block), With<Block>>,
+    mut hand_block_query: Query<(&Transform, &HandBlock), (With<HandBlock>, Without<Block>)>,
+) {
+    if block_query.is_empty() || hand_block_query.is_empty() {
+        return;
+    }
+    let (hb_t, hb_b) = hand_block_query.single_mut();
+
+    let mut target_block_index = HashSet::new();
+    let mut target_block_translation = Vec2::NEG_INFINITY;
+    // 遍历所有方块，获取最外层方块的索引并添加到target_block_index中
+    for (b_t, _) in block_query.iter() {
+        let block_translation = b_t.translation;
+        target_block_translation.x = block_translation.x.max(target_block_translation.x);
+        target_block_translation.y = block_translation.y.max(target_block_translation.y);
+    }
+    for (b_t, b_b) in block_query.iter() {
+        let block_translation = b_t.translation;
+        if target_block_translation.x == block_translation.x
+            || target_block_translation.y == block_translation.y
+        {
+            target_block_index.insert(b_b.index);
+        }
+    }
+
+    if !target_block_index.contains(&hb_b.index) {
+        // 方块在目标方块内部，重置手里方块
+        println!(
+            "target_block_index: {:?} 手里的是：{:?}",
+            target_block_index, hb_b.index
+        );
+        println!("没有可消除的方块了");
+    }
 }

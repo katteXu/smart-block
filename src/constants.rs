@@ -16,7 +16,7 @@ pub const SPRITE_SCALE_FACTOR: f32 = 3.0;
 pub const STEP_SIZE: usize = 48;
 
 // Colors
-pub const BG_COLOR: (u8, u8, u8) = (197, 204, 184);
+pub const BG_COLOR: (u8, u8, u8) = (74, 91, 198);
 
 // Player
 pub const PLAYER_INIT_POS: (f32, f32) = (240.0, -288.0);
