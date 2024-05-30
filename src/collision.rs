@@ -197,7 +197,7 @@ fn handle_block_wall_collision(
         if let Ok(w_t) = wall_query.get(w_e.entity) {
             hand_block.direction = Direction::Down;
             transform.translation.x = w_t.translation.x + STEP_SIZE as f32;
-            is_eliminate.0 = false;
+            // is_eliminate.0 = false;
         }
     }
 }
