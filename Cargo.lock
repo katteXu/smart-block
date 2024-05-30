@@ -300,6 +300,7 @@ name = "bevy-smart_block"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_embedded_assets",
  "kd-tree",
  "rand",
  "typenum",
@@ -508,6 +509,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.66",
+]
+
+[[package]]
+name = "bevy_embedded_assets"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a4b0bfcdcbd0c59829415ae0756757d50dfdb0c8f324087b4a2daabb3971fbd"
+dependencies = [
+ "bevy",
+ "cargo-emit",
+ "futures-io",
+ "futures-lite",
 ]
 
 [[package]]
@@ -1216,6 +1229,12 @@ dependencies = [
  "slab",
  "thiserror",
 ]
+
+[[package]]
+name = "cargo-emit"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1582e1c9e755dd6ad6b224dcffb135d199399a4568d454bd89fe515ca8425695"
 
 [[package]]
 name = "cc"

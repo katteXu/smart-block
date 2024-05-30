@@ -77,7 +77,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 text: Text::from_section(
                     SCORE_TEXT,
                     TextStyle {
-                        font: asset_server.load("fonts/font.ttf"),
+                        font: asset_server.load(FONT_PATH),
                         font_size: 28.0,
                         color: Color::WHITE,
                         ..default()
@@ -91,7 +91,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text::from_section(
                         "0000000",
                         TextStyle {
-                            font: asset_server.load("fonts/font.ttf"),
+                            font: asset_server.load(FONT_PATH),
                             font_size: 28.0,
                             color: Color::WHITE,
                             ..default()
@@ -129,7 +129,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 text: Text::from_section(
                     CLEAR_TEXT,
                     TextStyle {
-                        font: asset_server.load("fonts/font.ttf"),
+                        font: asset_server.load(FONT_PATH),
                         font_size: 32.0,
                         color: Color::WHITE,
                         ..default()
@@ -142,7 +142,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 text: Text::from_section(
                     "4",
                     TextStyle {
-                        font: asset_server.load("fonts/font.ttf"),
+                        font: asset_server.load(FONT_PATH),
                         font_size: 32.0,
                         color: Color::WHITE,
                         ..default()
@@ -178,7 +178,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 text: Text::from_section(
                     BLOCK_TEXT,
                     TextStyle {
-                        font: asset_server.load("fonts/font.ttf"),
+                        font: asset_server.load(FONT_PATH),
                         font_size: 32.0,
                         color: Color::WHITE,
                         ..default()
@@ -192,7 +192,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text::from_section(
                         "16",
                         TextStyle {
-                            font: asset_server.load("fonts/font.ttf"),
+                            font: asset_server.load(FONT_PATH),
                             font_size: 32.0,
                             color: Color::WHITE,
                             ..default()
@@ -231,7 +231,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text::from_section(
                         "0:00",
                         TextStyle {
-                            font: asset_server.load("fonts/font.ttf"),
+                            font: asset_server.load(FONT_PATH),
                             font_size: 56.0,
                             color: Color::WHITE,
                             ..default()
@@ -268,7 +268,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 text: Text::from_section(
                     STAGE_TEXT,
                     TextStyle {
-                        font: asset_server.load("fonts/font.ttf"),
+                        font: asset_server.load(FONT_PATH),
                         font_size: 32.0,
                         color: Color::WHITE,
                         ..default()
@@ -282,7 +282,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text::from_section(
                         "1",
                         TextStyle {
-                            font: asset_server.load("fonts/font.ttf"),
+                            font: asset_server.load(FONT_PATH),
                             font_size: 32.0,
                             color: Color::WHITE,
                             ..default()

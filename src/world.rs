@@ -174,63 +174,63 @@ fn init_world(
 
     // 生成方块组
     let (x, y) = BLOCK_INIT_POS;
-    for j in 0..BLOCK_NUM_H {
-        for i in 0..BLOCK_NUM_W {
-            let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: texture_atlas_index,
-                    },
-                    transform: Transform::from_translation(vec3(
-                        x + (i * STEP_SIZE) as f32,
-                        y + (j * STEP_SIZE) as f32,
-                        0.0,
-                    ))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                },
-                Block {
-                    index: texture_atlas_index,
-                    show: true,
-                },
-                GameEntity,
-            ));
-        }
-    }
-
-    // 测试固定渲染
-    // let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
-    // for pos_y in 0..group.len() {
-    //     for pos_x in 0..group[pos_y].len() {
-    //         let index = group[pos_y][pos_x];
-    //         if index > 0 {
-    //             commands.spawn((
-    //                 SpriteSheetBundle {
-    //                     texture: handle.image.clone().unwrap(),
-    //                     atlas: TextureAtlas {
-    //                         layout: handle.layout.clone().unwrap(),
-    //                         index: index,
-    //                     },
-    //                     transform: Transform::from_translation(vec3(
-    //                         x + (pos_x * STEP_SIZE) as f32,
-    //                         y + (pos_y * STEP_SIZE) as f32,
-    //                         0.0,
-    //                     ))
-    //                     .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-    //                     ..default()
+    // for j in 0..BLOCK_NUM_H {
+    //     for i in 0..BLOCK_NUM_W {
+    //         let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
+    //         commands.spawn((
+    //             SpriteSheetBundle {
+    //                 texture: handle.image.clone().unwrap(),
+    //                 atlas: TextureAtlas {
+    //                     layout: handle.layout.clone().unwrap(),
+    //                     index: texture_atlas_index,
     //                 },
-    //                 Block {
-    //                     index: index,
-    //                     show: true,
-    //                 },
-    //                 GameEntity,
-    //             ));
-    //         }
+    //                 transform: Transform::from_translation(vec3(
+    //                     x + (i * STEP_SIZE) as f32,
+    //                     y + (j * STEP_SIZE) as f32,
+    //                     0.0,
+    //                 ))
+    //                 .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+    //                 ..default()
+    //             },
+    //             Block {
+    //                 index: texture_atlas_index,
+    //                 show: true,
+    //             },
+    //             GameEntity,
+    //         ));
     //     }
     // }
+
+    // 测试固定渲染
+    let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
+    for pos_y in 0..group.len() {
+        for pos_x in 0..group[pos_y].len() {
+            let index = group[pos_y][pos_x];
+            if index > 0 {
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: index,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            x + (pos_x * STEP_SIZE) as f32,
+                            y + (pos_y * STEP_SIZE) as f32,
+                            0.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
+                    },
+                    Block {
+                        index: index,
+                        show: true,
+                    },
+                    GameEntity,
+                ));
+            }
+        }
+    }
 
     next_state.set(GameState::InGame);
 }

@@ -5,7 +5,8 @@ pub const WW: f32 = 1200.0;
 pub const WH: f32 = 720.0;
 
 // Sprite sheet
-pub const SPRITE_SHEET_PATH: &str = "assets.png";
+pub const SPRITE_SHEET_PATH: &str = "embedded://assets.png";
+pub const FONT_PATH: &str = "embedded://fonts/font.ttf";
 pub const TILES_W: usize = 16;
 pub const TILES_H: usize = 16;
 pub const SPRITE_SHEET_W: usize = 4;

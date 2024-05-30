@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::math::{vec2, vec3};
+use bevy::math::vec3;
 use bevy::prelude::*;
 
 use crate::player::Player;

@@ -1,4 +1,5 @@
 use bevy::{prelude::*, window::close_on_esc};
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_smart_block::block::BlockPlugin;
 use bevy_smart_block::camera::MyCameraPlugin;
 use bevy_smart_block::collision::CollisionPlugin;
@@ -9,10 +10,10 @@ use bevy_smart_block::resources::ResourcesPlugin;
 use bevy_smart_block::state::GameState;
 use bevy_smart_block::world::WorldPlugin;
 use bevy_smart_block::*;
-
 fn main() {
     App::new()
         .init_state::<GameState>()
+        .add_plugins(EmbeddedAssetPlugin::default())
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
