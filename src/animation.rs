@@ -71,10 +71,10 @@ fn high_score_animation(
 
     let (mut transform, entity, mut high_score) = high_socre_query.single_mut();
 
-    high_score.animationTimer.tick(time.delta());
+    high_score.animation_timer.tick(time.delta());
 
     // 动画结束时销毁
-    if high_score.animationTimer.just_finished() {
+    if high_score.animation_timer.just_finished() {
         commands.entity(entity).despawn_recursive();
     }
     transform.translation.y += HIGH_SCORE_ANIMATION_SPEED * time.delta_seconds();

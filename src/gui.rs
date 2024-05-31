@@ -26,12 +26,12 @@ impl Default for TextScore {
 // 高分展示
 #[derive(Component)]
 pub struct HighScore {
-    pub animationTimer: Timer,
+    pub animation_timer: Timer,
 }
 impl Default for HighScore {
     fn default() -> Self {
         Self {
-            animationTimer: Timer::from_seconds(HIGH_SCORE_ANIMATION_DURATION, TimerMode::Once),
+            animation_timer: Timer::from_seconds(HIGH_SCORE_ANIMATION_DURATION, TimerMode::Once),
         }
     }
 }

@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 
+use bevy::math::vec2;
 use bevy::prelude::*;
 
-use crate::state::{GameState, HandBlockState};
+use crate::state::{BlockGroupState, GameState, HandBlockState};
 use crate::*;
 
 use crate::player::Player;
@@ -14,6 +15,7 @@ use crate::gui::TextScore;
 pub struct Block {
     pub index: usize,
     pub show: bool,
+    pub pos: Vec2,
 }
 
 #[derive(Component)]
@@ -31,7 +33,8 @@ impl Default for HandBlock {
     }
 }
 
-// 方向
+// 手里方块移动方向
+// 默认向左 碰触墙壁则向下
 pub enum Direction {
     Left,
     Down,
@@ -48,11 +51,32 @@ struct BlockDownEvent {
     pub remove_block_pos: Vec2,
 }
 
+#[derive(Debug)]
+pub struct RemoveBlock {
+    pub pos: Vec2,
+}
+
+#[derive(Resource)]
+pub struct RemoveBlockResource {
+    blocks: Option<Vec<RemoveBlock>>,
+    fall_down_timer: Timer,
+}
+impl Default for RemoveBlockResource {
+    fn default() -> Self {
+        Self {
+            blocks: None,
+            fall_down_timer: Timer::from_seconds(0.1, TimerMode::Once),
+        }
+    }
+}
+
 pub struct BlockPlugin;
 
 impl Plugin for BlockPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<HandBlockState>()
+            .init_state::<BlockGroupState>()
+            .init_resource::<RemoveBlockResource>()
             .add_event::<BlockDownEvent>()
             .add_systems(
                 Update,
@@ -73,6 +97,10 @@ impl Plugin for BlockPlugin {
                     // handle_block_change,
                     handle_reset_hand_block,
                 ),
+            )
+            .add_systems(
+                Update,
+                handle_block_fall_down.run_if(in_state(BlockGroupState::FallDown)),
             );
     }
 }
@@ -80,31 +108,45 @@ impl Plugin for BlockPlugin {
 // 处理方块消除
 fn handle_block_remove(
     mut commands: Commands,
+    mut remove_block_resource: ResMut<RemoveBlockResource>,
     mut score_query: Query<&mut TextScore, With<TextScore>>,
     mut events: EventWriter<BlockDownEvent>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
+    mut next_state: ResMut<NextState<BlockGroupState>>,
 ) {
     if query.is_empty() || hand_block_query.is_empty() || score_query.is_empty() {
         return;
     }
     let mut text_score = score_query.single_mut();
-    let mut remove_block = 0;
+    // 消除块数
+    let mut remove_blocks = vec![];
 
     // 消除方块
     for (transform, block, entity) in query.iter_mut() {
         if !block.show {
             commands.entity(entity).despawn();
 
-            remove_block += 1;
-            // 触发方块下落事件
-            events.send(BlockDownEvent {
-                remove_block_pos: transform.translation.truncate(),
+            remove_blocks.push(RemoveBlock {
+                pos: transform.translation.truncate(),
             });
+            // 触发方块下落事件
+            // events.send(BlockDownEvent {
+            //     remove_block_pos: transform.translation.truncate(),
+            // });
+
+            next_state.set(BlockGroupState::FallDown);
         }
     }
+    // 分数计算
+    text_score.once_remove_block = remove_blocks.len() as u32;
 
-    text_score.once_remove_block = remove_block;
+    // 移除方块resource
+    if remove_blocks.len() > 0 {
+        remove_block_resource.blocks = Some(remove_blocks);
+    } else {
+        remove_block_resource.blocks = None;
+    }
 }
 
 // 处理方块下落
@@ -118,14 +160,14 @@ fn handle_block_down(
 
     for e in events.read() {
         let remove_block_pos = e.remove_block_pos;
-        for (mut transform, block) in query.iter_mut() {
-            if block.show
-                && transform.translation.x == remove_block_pos.x
-                && transform.translation.y >= remove_block_pos.y
-            {
-                transform.translation.y -= STEP_SIZE as f32;
-            }
-        }
+        // for (mut transform, block) in query.iter_mut() {
+        //     if block.show
+        //         && transform.translation.x == remove_block_pos.x
+        //         && transform.translation.y >= remove_block_pos.y
+        //     {
+        //         transform.translation.y -= STEP_SIZE as f32;
+        //     }
+        // }
     }
 }
 
@@ -175,6 +217,57 @@ fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
     let mut hand_block = query.single_mut();
 
     hand_block.direction = Direction::Left;
+}
+
+// 下落动画
+fn handle_block_fall_down(
+    time: Res<Time>,
+    mut remove_block_resource: ResMut<RemoveBlockResource>,
+    mut next_state: ResMut<NextState<BlockGroupState>>,
+    mut query: Query<(&mut Transform, &mut Block), With<Block>>,
+) {
+    if remove_block_resource.blocks.is_none() {
+        return;
+    }
+    remove_block_resource.fall_down_timer.tick(time.delta());
+    let finished: bool = remove_block_resource.fall_down_timer.finished();
+
+    if let Some(remove_blocks) = remove_block_resource.blocks.as_mut() {
+        // 方块下落
+        // 1. 获取到所有下落的方块
+        // 2. 遍历所有方块，将所有下落的方块的上方方块下移
+        for remove_block in remove_blocks {
+            let pos = remove_block.pos;
+
+            for (mut transform, mut block) in query.iter_mut() {
+                if block.show
+                    && transform.translation.x == pos.x
+                    && transform.translation.y >= pos.y
+                {
+                    // 根据方块的y值判断是否需要下移
+                    if transform.translation.y == block.pos.y {
+                        // 将下移位置保存
+                        block.pos.y -= STEP_SIZE as f32;
+                    }
+
+                    transform.translation.y -= STEP_SIZE as f32 * time.delta_seconds() * 10.0;
+
+                    if finished {
+                        // 下移完成，重置方块的y值
+                        transform.translation.y = block.pos.y;
+                        // transform.translation.y -= STEP_SIZE as f32
+                    }
+                }
+            }
+        }
+    }
+
+    // 下落完成
+    if finished {
+        remove_block_resource.fall_down_timer.reset();
+        remove_block_resource.blocks = None;
+        next_state.set(BlockGroupState::Static);
+    }
 }
 
 // TODO: 处理没有可消除方块逻辑

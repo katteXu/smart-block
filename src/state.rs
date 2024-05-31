@@ -27,3 +27,11 @@ pub enum HandBlockState {
     Moving,
     Backing,
 }
+
+// 方块组装填
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Copy, States)]
+pub enum BlockGroupState {
+    #[default]
+    Static,
+    FallDown,
+}

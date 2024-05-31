@@ -1,4 +1,4 @@
-use bevy::math::vec3;
+use bevy::math::{vec2, vec3};
 use bevy::prelude::*;
 #[allow(unused)]
 use rand::Rng;
@@ -193,6 +193,7 @@ fn init_world(
                 Block {
                     index: texture_atlas_index,
                     show: true,
+                    pos: vec2(x + (i * STEP_SIZE) as f32, y + (j * STEP_SIZE) as f32),
                 },
                 GameEntity,
             ));
