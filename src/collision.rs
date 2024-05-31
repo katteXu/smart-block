@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use bevy::math::vec3;
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use kd_tree::{KdPoint, KdTree};
 
@@ -9,6 +10,8 @@ use crate::*;
 
 use crate::block::Direction;
 use crate::wall::{Ground, Wall};
+
+use self::player::Player;
 
 #[derive(Component, Debug)]
 pub struct Collidable {
@@ -59,6 +62,23 @@ impl Default for GroundKdTree {
     }
 }
 
+// 贝塞尔曲线点
+#[derive(Resource)]
+pub struct BezierPoints(pub Option<[[Vec3; 4]; 1]>);
+impl Default for BezierPoints {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+
+#[derive(Resource)]
+pub struct CollisionBackTimer(Timer);
+impl Default for CollisionBackTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(1.0 / 3.0, TimerMode::Once))
+    }
+}
+
 #[derive(Resource)]
 struct IsEliminate(bool);
 
@@ -66,7 +86,9 @@ pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(BlockKdTree::default())
+        app.init_resource::<BezierPoints>()
+            .init_resource::<CollisionBackTimer>()
+            .insert_resource(BlockKdTree::default())
             .insert_resource(WallKdTree::default())
             .insert_resource(GroundKdTree::default())
             .insert_resource(IsEliminate(false))
@@ -83,6 +105,7 @@ impl Plugin for CollisionPlugin {
                         handle_block_ground_collision,
                     )
                         .run_if(in_state(HandBlockState::Moving)),
+                    handle_collision_back_animation.run_if(in_state(HandBlockState::Backing)),
                     update_block_kd_tree
                         .run_if(in_state(HandBlockState::Idle))
                         .run_if(on_timer(Duration::from_secs_f32(KD_TREE_REFRESH_RATE))),
@@ -149,29 +172,38 @@ fn update_block_kd_tree(
 fn handle_block_collision(
     tree: ResMut<BlockKdTree>,
     mut is_eliminate: ResMut<IsEliminate>,
-    mut hand_block_query: Query<(&mut Transform, &mut HandBlock), With<HandBlock>>,
-    mut block_query: Query<&mut Block, (With<Block>, Without<HandBlock>)>,
+    mut hand_block_query: Query<(&mut Transform, &mut TextureAtlas), With<HandBlock>>,
+    mut block_query: Query<
+        (&mut Block, &mut Visibility, &mut TextureAtlas),
+        (With<Block>, Without<HandBlock>),
+    >,
     mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
     if hand_block_query.is_empty() || block_query.is_empty() {
         return;
     }
 
-    let (transform, mut hand_block) = hand_block_query.single_mut();
+    let (transform, mut hand_block_text_atlas) = hand_block_query.single_mut();
     let pos = transform.translation.truncate();
     let blocks = tree.0.within_radius(&[pos.x, pos.y], 48.0);
 
     for b_e in blocks {
-        if let Ok(mut b_b) = block_query.get_mut(b_e.entity) {
-            if b_b.index == hand_block.index {
+        if let Ok((mut b_b, mut b_visible, mut block_text_atlas)) = block_query.get_mut(b_e.entity)
+        {
+            // 判断方块碰撞后是否可消除
+            // 种类相同 可消除
+            if block_text_atlas.index == hand_block_text_atlas.index {
                 b_b.show = false;
                 is_eliminate.0 = true;
+                *b_visible = Visibility::Hidden;
             } else if b_b.show {
+                // 不同种类方块 不可消除 且之前有消除过 则交换方块种类
                 if is_eliminate.0 {
-                    (hand_block.index, b_b.index) = (b_b.index, hand_block.index);
+                    (hand_block_text_atlas.index, block_text_atlas.index) =
+                        (block_text_atlas.index, hand_block_text_atlas.index);
                     is_eliminate.0 = false;
                 }
-                next_state.set(HandBlockState::Idle);
+                next_state.set(HandBlockState::Backing);
             }
         }
     }
@@ -216,7 +248,55 @@ fn handle_block_ground_collision(
     let grounds = tree.0.within_radius(&[pos.x, pos.y], 42.0);
 
     for _ in grounds {
-        next_state.set(HandBlockState::Idle);
+        next_state.set(HandBlockState::Backing);
         is_eliminate.0 = false;
+    }
+}
+
+// 方块返回动画
+fn handle_collision_back_animation(
+    time: Res<Time>,
+    mut timer: ResMut<CollisionBackTimer>,
+    mut points: ResMut<BezierPoints>,
+    mut next_state: ResMut<NextState<HandBlockState>>,
+    player_query: Query<&Transform, With<Player>>,
+    mut hand_block_query: Query<&mut Transform, (With<HandBlock>, Without<Player>)>,
+) {
+    if hand_block_query.is_empty() || player_query.is_empty() {
+        return;
+    }
+
+    let player_transform = player_query.single();
+    let mut hand_block_transform = hand_block_query.single_mut();
+    let pos = hand_block_transform.translation.truncate();
+    let direction = player_transform.translation.truncate() - pos;
+
+    timer.0.tick(time.delta());
+
+    if let Some(b_points) = points.0 {
+        let bezier = CubicBezier::new(b_points).to_curve();
+
+        hand_block_transform.translation = bezier.position(timer.0.elapsed_secs() * 3.0);
+
+        if direction.length() < 50.0 {
+            points.0 = None;
+
+            next_state.set(HandBlockState::Idle);
+
+            timer.0.reset();
+        }
+    } else {
+        let target_pos = hand_block_transform.translation;
+        let top_y = (player_transform.translation.y + 220.0).min(WH / 2.0 - STEP_SIZE as f32);
+        points.0 = Some([[
+            target_pos,
+            vec3(-50., top_y, 0.),
+            vec3(-50., top_y, 0.),
+            vec3(
+                player_transform.translation.x - STEP_SIZE as f32,
+                player_transform.translation.y,
+                player_transform.translation.z,
+            ),
+        ]]);
     }
 }

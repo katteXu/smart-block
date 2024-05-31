@@ -45,6 +45,10 @@ pub const STAGE_TEXT: &str = "STAGE";
 // UI SCORE
 pub const SCORE_BLOCK_WIDTH: f32 = 220.0;
 pub const SCORE_BLOCK_POS: (f32, f32) = (48.0, 18.0);
+pub const ONEC_BLOCK_SCORE: u32 = 100;
+pub const HIGH_SCORE_POS_PERCENT: (f32, f32) = (-300.0, 100.0);
+pub const HIGH_SCORE_ANIMATION_DURATION: f32 = 0.5;
+pub const HIGH_SCORE_ANIMATION_SPEED: f32 = 64.0;
 
 // UI CLEAR
 pub const CLEAR_BLOCK_POS: (f32, f32) = (48.0, 96.0);
@@ -62,7 +66,7 @@ pub const RIGHT_BLOCK_WIDTH: f32 = 240.0;
 pub const RIGHT_BLOCK_HEIGHT: f32 = 96.0;
 
 //
-// 8-13
+// 元素精灵图索引 8-13
 pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [
     // stage1
     [13, 11, 11, 11, 0],

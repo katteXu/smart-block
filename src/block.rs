@@ -70,7 +70,7 @@ impl Plugin for BlockPlugin {
                 OnExit(HandBlockState::Moving),
                 (
                     handle_block_remove,
-                    handle_block_change,
+                    // handle_block_change,
                     handle_reset_hand_block,
                 ),
             );
@@ -89,14 +89,14 @@ fn handle_block_remove(
         return;
     }
     let mut text_score = score_query.single_mut();
-    let mut score = 0;
+    let mut remove_block = 0;
 
     // 消除方块
     for (transform, block, entity) in query.iter_mut() {
         if !block.show {
             commands.entity(entity).despawn();
 
-            score += 100;
+            remove_block += 1;
             // 触发方块下落事件
             events.send(BlockDownEvent {
                 remove_block_pos: transform.translation.truncate(),
@@ -104,7 +104,7 @@ fn handle_block_remove(
         }
     }
 
-    text_score.once_score = score;
+    text_score.once_remove_block = remove_block;
 }
 
 // 处理方块下落
@@ -149,24 +149,6 @@ fn handle_hand_block_move(
     }
 }
 
-// 处理方块变更
-fn handle_block_change(
-    mut hand_block_query: Query<(&mut TextureAtlas, &HandBlock), With<HandBlock>>,
-    mut block_query: Query<(&mut TextureAtlas, &Block), (With<Block>, Without<HandBlock>)>,
-) {
-    if hand_block_query.is_empty() || block_query.is_empty() {
-        return;
-    }
-
-    let (mut texture_atlas, hand_block) = hand_block_query.single_mut();
-
-    texture_atlas.index = hand_block.index as usize;
-
-    for (mut texture_atlas, block) in block_query.iter_mut() {
-        texture_atlas.index = block.index as usize;
-    }
-}
-
 // 方块跟随玩家移动
 fn handle_block_movement(
     player_query: Query<&Transform, With<Player>>,
@@ -184,7 +166,7 @@ fn handle_block_movement(
     hand_block_transform.translation.x = player_transform.translation.x - STEP_SIZE as f32;
 }
 
-// 重置手里方块
+// 重置手里方块方向
 fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
     if query.is_empty() {
         return;

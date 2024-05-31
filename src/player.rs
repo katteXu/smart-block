@@ -63,12 +63,20 @@ fn handle_player_movement(
 
 // 扔方块
 fn handle_throw_block(
+    mut player_query: Query<&mut PlayerState, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut next_state: ResMut<NextState<HandBlockState>>,
 ) {
+    if player_query.is_empty() || !keyboard_input.pressed(KeyCode::Space) {
+        return;
+    }
+
+    let mut player_state = player_query.single_mut();
+
     let space_key = keyboard_input.just_pressed(KeyCode::Space);
 
     if space_key {
         next_state.set(HandBlockState::Moving);
+        *player_state = PlayerState::Throwing;
     }
 }

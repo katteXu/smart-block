@@ -1,3 +1,4 @@
+use bevy::math::vec3;
 use bevy::prelude::*;
 
 use crate::block::Block;
@@ -7,16 +8,30 @@ use crate::*;
 
 pub struct GuiPlugin;
 
+// UI 分数
 #[derive(Component)]
 pub struct TextScore {
     pub total_score: u32,
-    pub once_score: u32,
+    pub once_remove_block: u32,
 }
 impl Default for TextScore {
     fn default() -> Self {
         Self {
             total_score: 0,
-            once_score: 0,
+            once_remove_block: 0,
+        }
+    }
+}
+
+// 高分展示
+#[derive(Component)]
+pub struct HighScore {
+    pub animationTimer: Timer,
+}
+impl Default for HighScore {
+    fn default() -> Self {
+        Self {
+            animationTimer: Timer::from_seconds(HIGH_SCORE_ANIMATION_DURATION, TimerMode::Once),
         }
     }
 }
@@ -296,16 +311,24 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // 更新分数
-fn update_score(mut query: Query<(&mut Text, &mut TextScore), With<TextScore>>) {
+fn update_score(
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<(&mut Text, &mut TextScore), With<TextScore>>,
+) {
     if query.is_empty() {
         return;
     }
 
     let (mut text, mut text_score) = query.single_mut();
 
-    if text_score.once_score > 0 {
-        text_score.total_score += text_score.once_score;
-        text_score.once_score = 0;
+    if text_score.once_remove_block > 0 {
+        let once_score = text_score.once_remove_block.pow(2) * ONEC_BLOCK_SCORE;
+        text_score.total_score += once_score;
+        if text_score.once_remove_block > 1 {
+            spawn_hight_score(commands, asset_server.load(FONT_PATH), once_score);
+        }
+        text_score.once_remove_block = 0;
         text.sections[0].value = format!("{:0>7}", text_score.total_score);
     }
 }
@@ -349,4 +372,26 @@ fn update_count_down(
     let seconds = (total_time % 60.0).floor();
 
     text.sections[0].value = format!("{:0>2}:{:0>2}", minite, seconds);
+}
+
+// 生成高分提示
+pub fn spawn_hight_score(mut commands: Commands, font_handle: Handle<Font>, score_value: u32) {
+    let (x, y) = HIGH_SCORE_POS_PERCENT;
+    commands.spawn((
+        Text2dBundle {
+            transform: Transform::from_translation(vec3(x, y, 1.0)),
+            text: Text::from_section(
+                score_value.to_string(),
+                TextStyle {
+                    font: font_handle.clone_weak(),
+                    font_size: 72.0,
+                    color: Color::YELLOW,
+                    ..default()
+                },
+            ),
+            ..Default::default()
+        },
+        HighScore::default(),
+        GameEntity,
+    ));
 }

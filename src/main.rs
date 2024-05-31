@@ -1,5 +1,6 @@
 use bevy::{prelude::*, window::close_on_esc};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
+use bevy_smart_block::animation::AnimationPlugin;
 use bevy_smart_block::block::BlockPlugin;
 use bevy_smart_block::camera::MyCameraPlugin;
 use bevy_smart_block::collision::CollisionPlugin;
@@ -40,6 +41,7 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .add_plugins(GuiPlugin)
         .add_plugins(CollisionPlugin)
+        .add_plugins(AnimationPlugin)
         .add_systems(Update, close_on_esc)
         .run();
 }
