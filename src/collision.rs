@@ -190,13 +190,16 @@ fn handle_block_collision(
     for b_e in blocks {
         if let Ok((mut b_b, mut b_visible, mut block_text_atlas)) = block_query.get_mut(b_e.entity)
         {
+            if !b_b.show {
+                continue;
+            }
             // 判断方块碰撞后是否可消除
             // 种类相同 可消除
             if block_text_atlas.index == hand_block_text_atlas.index {
                 b_b.show = false;
                 is_eliminate.0 = true;
                 *b_visible = Visibility::Hidden;
-            } else if b_b.show {
+            } else {
                 // 不同种类方块 不可消除 且之前有消除过 则交换方块种类
                 if is_eliminate.0 {
                     (hand_block_text_atlas.index, block_text_atlas.index) =

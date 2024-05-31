@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use bevy::math::vec2;
 use bevy::prelude::*;
 
 use crate::state::{BlockGroupState, GameState, HandBlockState};
@@ -46,11 +45,6 @@ impl Default for Direction {
     }
 }
 
-#[derive(Event)]
-struct BlockDownEvent {
-    pub remove_block_pos: Vec2,
-}
-
 #[derive(Debug)]
 pub struct RemoveBlock {
     pub pos: Vec2,
@@ -77,7 +71,6 @@ impl Plugin for BlockPlugin {
         app.init_state::<HandBlockState>()
             .init_state::<BlockGroupState>()
             .init_resource::<RemoveBlockResource>()
-            .add_event::<BlockDownEvent>()
             .add_systems(
                 Update,
                 (
@@ -87,16 +80,8 @@ impl Plugin for BlockPlugin {
                     .run_if(in_state(GameState::InGame)),
             )
             .add_systems(
-                Update,
-                (handle_block_down).run_if(in_state(GameState::InGame)),
-            )
-            .add_systems(
                 OnExit(HandBlockState::Moving),
-                (
-                    handle_block_remove,
-                    // handle_block_change,
-                    handle_reset_hand_block,
-                ),
+                (handle_block_remove, handle_reset_hand_block),
             )
             .add_systems(
                 Update,
@@ -110,7 +95,6 @@ fn handle_block_remove(
     mut commands: Commands,
     mut remove_block_resource: ResMut<RemoveBlockResource>,
     mut score_query: Query<&mut TextScore, With<TextScore>>,
-    mut events: EventWriter<BlockDownEvent>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
     mut next_state: ResMut<NextState<BlockGroupState>>,
@@ -130,10 +114,6 @@ fn handle_block_remove(
             remove_blocks.push(RemoveBlock {
                 pos: transform.translation.truncate(),
             });
-            // 触发方块下落事件
-            // events.send(BlockDownEvent {
-            //     remove_block_pos: transform.translation.truncate(),
-            // });
 
             next_state.set(BlockGroupState::FallDown);
         }
@@ -146,28 +126,6 @@ fn handle_block_remove(
         remove_block_resource.blocks = Some(remove_blocks);
     } else {
         remove_block_resource.blocks = None;
-    }
-}
-
-// 处理方块下落
-fn handle_block_down(
-    mut events: EventReader<BlockDownEvent>,
-    mut query: Query<(&mut Transform, &Block), With<Block>>,
-) {
-    if query.is_empty() {
-        return;
-    }
-
-    for e in events.read() {
-        let remove_block_pos = e.remove_block_pos;
-        // for (mut transform, block) in query.iter_mut() {
-        //     if block.show
-        //         && transform.translation.x == remove_block_pos.x
-        //         && transform.translation.y >= remove_block_pos.y
-        //     {
-        //         transform.translation.y -= STEP_SIZE as f32;
-        //     }
-        // }
     }
 }
 

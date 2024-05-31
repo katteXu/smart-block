@@ -20,7 +20,12 @@ struct Arrow;
 impl Plugin for ArrowPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::GameInit), spawn_arrow)
-            .add_systems(Update, update_arrow.run_if(in_state(HandBlockState::Idle)))
+            .add_systems(
+                Update,
+                update_arrow
+                    .run_if(in_state(HandBlockState::Idle))
+                    .run_if(in_state(GameState::InGame)),
+            )
             .add_systems(
                 OnEnter(HandBlockState::Idle),
                 handle_arrow_show.run_if(in_state(GameState::InGame)),
@@ -33,7 +38,7 @@ impl Plugin for ArrowPlugin {
 }
 
 fn spawn_arrow(mut commands: Commands, handle: ResMut<GlobalTextAtlas>) {
-    // 生成玩家
+    // 生成箭头
     let (x, y) = PLAYER_INIT_POS;
     commands.spawn((
         SpriteSheetBundle {
@@ -57,25 +62,23 @@ fn update_arrow(
     block_query: Query<&Transform, (With<Block>, Without<Player>)>,
     wall_query: Query<&Transform, (With<Wall>, Without<Player>, Without<Block>)>,
     mut arrow_query: Query<
-        &mut Transform,
+        (&mut Transform, &mut Visibility),
         (With<Arrow>, Without<Player>, Without<Block>, Without<Wall>),
     >,
 ) {
-    if player_query.is_empty()
-        || arrow_query.is_empty()
-        || block_query.is_empty()
-        || wall_query.is_empty()
-    {
+    if player_query.is_empty() || arrow_query.is_empty() || wall_query.is_empty() {
         return;
     }
-
+    let (mut arrow_transform, mut arrow_visibility) = arrow_query.single_mut();
+    if block_query.is_empty() {
+        *arrow_visibility = Visibility::Hidden;
+    }
     let player_transform = player_query.single();
     // 基于y
     let base_y = player_transform.translation.y;
     // 基于block
     let mut base_block = false;
 
-    let mut arrow_transform = arrow_query.single_mut();
     let mut target_block = Vec2::NEG_INFINITY;
 
     // 方块位置
