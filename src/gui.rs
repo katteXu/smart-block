@@ -6,6 +6,8 @@ use crate::state::GameState;
 use crate::world::GameEntity;
 use crate::*;
 
+use self::state::SettlementState;
+
 pub struct GuiPlugin;
 
 // UI 分数
@@ -40,6 +42,9 @@ impl Default for HighScore {
 pub struct TextCountDown;
 
 #[derive(Component)]
+pub struct ClearNum;
+
+#[derive(Component)]
 pub struct BlockNum;
 
 #[derive(Component)]
@@ -61,7 +66,8 @@ impl Plugin for GuiPlugin {
             .add_systems(
                 Update,
                 (update_score, update_block_number, update_count_down)
-                    .run_if(in_state(GameState::InGame)),
+                    .run_if(in_state(GameState::InGame))
+                    .run_if(in_state(SettlementState::Not)),
             );
     }
 }
@@ -153,18 +159,21 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             });
 
-            parent.spawn((TextBundle {
-                text: Text::from_section(
-                    "4",
-                    TextStyle {
-                        font: asset_server.load(FONT_PATH),
-                        font_size: 32.0,
-                        color: Color::WHITE,
-                        ..default()
-                    },
-                ),
-                ..Default::default()
-            },));
+            parent.spawn((
+                TextBundle {
+                    text: Text::from_section(
+                        CLEAR_NUM.to_string(),
+                        TextStyle {
+                            font: asset_server.load(FONT_PATH),
+                            font_size: 32.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ),
+                    ..Default::default()
+                },
+                ClearNum,
+            ));
         });
 
     // 方块数

@@ -35,3 +35,11 @@ pub enum BlockGroupState {
     Static,
     FallDown,
 }
+
+// 游戏结束 结算状态
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Copy, States)]
+pub enum SettlementState {
+    #[default]
+    Not,
+    Start,
+}

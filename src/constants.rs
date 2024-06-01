@@ -22,6 +22,9 @@ pub const BG_COLOR: (u8, u8, u8) = (74, 91, 198);
 // Player
 pub const PLAYER_INIT_POS: (f32, f32) = (240.0, -288.0);
 
+// Ladder
+pub const LADDER_NUM: usize = 13;
+
 // Arrow
 pub const ARROW_TEXTATLAS_INDEX: usize = 7;
 
@@ -34,8 +37,10 @@ pub const BLOCK_NUM_H: usize = 4;
 pub const BLOCK_INIT_POS: (f32, f32) = (-528.0, -288.0);
 pub const BLOCK_DISPLAY_RANGE: RangeInclusive<usize> = 8..=11;
 pub const HAND_BLOCK_SPEED: f32 = 1280.0;
-pub const HAND_BLOCK_INDEX: usize = 9;
-
+pub const HAND_BLOCK_INDEX: usize = 15;
+pub const FALL_DOWN_TIMER: f32 = 0.12;
+// 闪电 万能块索引
+pub const LIGHT_BLOCK_INDEX: usize = 15;
 // UI text
 pub const SCORE_TEXT: &str = "SCORE";
 pub const BLOCK_TEXT: &str = "BLOCK";
@@ -52,7 +57,7 @@ pub const HIGH_SCORE_ANIMATION_SPEED: f32 = 64.0;
 
 // UI CLEAR
 pub const CLEAR_BLOCK_POS: (f32, f32) = (48.0, 96.0);
-
+pub const CLEAR_NUM: usize = 4;
 // UI BLOCK
 pub const BLOCK_BLOCK_POS: (f32, f32) = (48.0, 240.0);
 
@@ -69,13 +74,13 @@ pub const RIGHT_BLOCK_HEIGHT: f32 = 96.0;
 // 元素精灵图索引 8-13
 pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [
     // stage1
-    [13, 11, 11, 11, 0],
-    [8, 13, 13, 13, 0],
-    [9, 9, 9, 9, 0],
-    [11, 8, 8, 8, 0],
+    // [13, 11, 11, 11, 0],
+    // [8, 13, 13, 13, 0],
+    // [9, 9, 9, 9, 0],
+    // [11, 8, 8, 8, 0],
     // stage2
-    // [13, 8, 8, 8, 0],
-    // [11, 8, 13, 13, 0],
-    // [9, 8, 8, 8, 0],
-    // [13, 8, 13, 13, 0],
+    [13, 8, 8, 8, 0],
+    [11, 8, 13, 8, 0],
+    [9, 8, 8, 8, 0],
+    [13, 8, 13, 8, 0],
 ];

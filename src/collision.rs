@@ -79,8 +79,18 @@ impl Default for CollisionBackTimer {
     }
 }
 
+// 是否消除
 #[derive(Resource)]
 struct IsEliminate(bool);
+
+// 闪电块首次碰触的方块
+#[derive(Resource)]
+struct LightFirstRemoveBlock(Option<usize>);
+impl Default for LightFirstRemoveBlock {
+    fn default() -> Self {
+        Self(None)
+    }
+}
 
 pub struct CollisionPlugin;
 
@@ -88,6 +98,7 @@ impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<BezierPoints>()
             .init_resource::<CollisionBackTimer>()
+            .init_resource::<LightFirstRemoveBlock>()
             .insert_resource(BlockKdTree::default())
             .insert_resource(WallKdTree::default())
             .insert_resource(GroundKdTree::default())
@@ -101,6 +112,7 @@ impl Plugin for CollisionPlugin {
                 (
                     (
                         handle_block_collision,
+                        handle_lightning_block_collision,
                         handle_block_wall_collision,
                         handle_block_ground_collision,
                     )
@@ -111,6 +123,10 @@ impl Plugin for CollisionPlugin {
                         .run_if(on_timer(Duration::from_secs_f32(KD_TREE_REFRESH_RATE))),
                 )
                     .run_if(in_state(GameState::InGame)),
+            )
+            .add_systems(
+                OnEnter(HandBlockState::Backing),
+                lighting_first_remove_block_index_reset,
             );
     }
 }
@@ -184,6 +200,11 @@ fn handle_block_collision(
     }
 
     let (transform, mut hand_block_text_atlas) = hand_block_query.single_mut();
+
+    // 如果是闪电块 则返回 由闪电碰撞逻辑处理
+    if hand_block_text_atlas.index == LIGHT_BLOCK_INDEX {
+        return;
+    }
     let pos = transform.translation.truncate();
     let blocks = tree.0.within_radius(&[pos.x, pos.y], 48.0);
 
@@ -210,6 +231,68 @@ fn handle_block_collision(
             }
         }
     }
+}
+
+// 处理万能方块碰撞
+fn handle_lightning_block_collision(
+    tree: ResMut<BlockKdTree>,
+    mut lighting_first_remove_block: ResMut<LightFirstRemoveBlock>,
+    mut hand_block_query: Query<(&mut Transform, &mut TextureAtlas), With<HandBlock>>,
+    mut block_query: Query<
+        (&mut Block, &mut Visibility, &mut TextureAtlas),
+        (With<Block>, Without<HandBlock>),
+    >,
+    mut next_state: ResMut<NextState<HandBlockState>>,
+) {
+    if hand_block_query.is_empty() || block_query.is_empty() {
+        return;
+    }
+
+    let (transform, hand_block_text_atlas) = hand_block_query.single_mut();
+    // 如果非闪电块 则直接返回
+    if hand_block_text_atlas.index != LIGHT_BLOCK_INDEX {
+        return;
+    }
+
+    let pos = transform.translation.truncate();
+    let blocks = tree.0.within_radius(&[pos.x, pos.y], 48.0);
+
+    for b_e in blocks {
+        if let Ok((mut b_b, mut b_visible, block_text_atlas)) = block_query.get_mut(b_e.entity) {
+            if !b_b.show {
+                continue;
+            }
+
+            if let Some(index) = lighting_first_remove_block.0 {
+                if block_text_atlas.index == index {
+                    b_b.show = false;
+                    *b_visible = Visibility::Hidden;
+                } else {
+                    next_state.set(HandBlockState::Backing);
+                }
+            } else {
+                b_b.show = false;
+                *b_visible = Visibility::Hidden;
+                lighting_first_remove_block.0 = Some(block_text_atlas.index);
+            }
+        }
+    }
+}
+
+// 闪电方块返回重置
+fn lighting_first_remove_block_index_reset(
+    mut lighting_first_remove_block: ResMut<LightFirstRemoveBlock>,
+    mut hand_block_query: Query<&mut TextureAtlas, With<HandBlock>>,
+) {
+    if hand_block_query.is_empty() {
+        return;
+    }
+
+    if let Some(index) = lighting_first_remove_block.0 {
+        hand_block_query.single_mut().index = index;
+    }
+
+    lighting_first_remove_block.0 = None;
 }
 
 // 处理墙体碰撞

@@ -1,18 +1,22 @@
 use std::collections::HashSet;
 
+use bevy::math::vec3;
 use bevy::prelude::*;
 
-use crate::state::{BlockGroupState, GameState, HandBlockState};
+use crate::state::{BlockGroupState, GameState, HandBlockState, SettlementState};
 use crate::*;
 
-use crate::player::Player;
+use crate::player::{Ladder, Player};
 
 use crate::gui::TextScore;
+
+use self::gui::ClearNum;
+
+use self::wall::Wall;
 
 // Block
 #[derive(Component, Debug)]
 pub struct Block {
-    pub index: usize,
     pub show: bool,
     pub pos: Vec2,
 }
@@ -59,10 +63,12 @@ impl Default for RemoveBlockResource {
     fn default() -> Self {
         Self {
             blocks: None,
-            fall_down_timer: Timer::from_seconds(0.1, TimerMode::Once),
+            fall_down_timer: Timer::from_seconds(FALL_DOWN_TIMER, TimerMode::Once),
         }
     }
 }
+#[derive(Event)]
+struct NoRemoveEvent;
 
 pub struct BlockPlugin;
 
@@ -71,6 +77,7 @@ impl Plugin for BlockPlugin {
         app.init_state::<HandBlockState>()
             .init_state::<BlockGroupState>()
             .init_resource::<RemoveBlockResource>()
+            .add_event::<NoRemoveEvent>()
             .add_systems(
                 Update,
                 (
@@ -86,6 +93,11 @@ impl Plugin for BlockPlugin {
             .add_systems(
                 Update,
                 handle_block_fall_down.run_if(in_state(BlockGroupState::FallDown)),
+            )
+            .add_systems(Update, handle_game_over.run_if(in_state(GameState::InGame)))
+            .add_systems(
+                OnEnter(BlockGroupState::Static),
+                handle_no_remove_block_by_player.run_if(in_state(GameState::InGame)),
             );
     }
 }
@@ -208,12 +220,12 @@ fn handle_block_fall_down(
                         block.pos.y -= STEP_SIZE as f32;
                     }
 
-                    transform.translation.y -= STEP_SIZE as f32 * time.delta_seconds() * 10.0;
+                    transform.translation.y -=
+                        STEP_SIZE as f32 * time.delta_seconds() / FALL_DOWN_TIMER;
 
                     if finished {
                         // 下移完成，重置方块的y值
                         transform.translation.y = block.pos.y;
-                        // transform.translation.y -= STEP_SIZE as f32
                     }
                 }
             }
@@ -228,39 +240,157 @@ fn handle_block_fall_down(
     }
 }
 
-// TODO: 处理没有可消除方块逻辑
-fn handle_none_block(
-    block_query: Query<(&Transform, &Block), With<Block>>,
-    mut hand_block_query: Query<(&Transform, &HandBlock), (With<HandBlock>, Without<Block>)>,
+// 处理游戏结束
+fn handle_game_over(
+    mut no_remove_event: EventReader<NoRemoveEvent>,
+    mut hand_block_query: Query<(&mut Transform, &mut TextureAtlas), With<HandBlock>>,
+    mut player_query: Query<&mut Transform, (With<Player>, Without<HandBlock>)>,
+    block_query: Query<(), With<Block>>,
+    clear_query: Query<&Text, With<ClearNum>>,
+    mut next_state: ResMut<NextState<SettlementState>>,
 ) {
-    if block_query.is_empty() || hand_block_query.is_empty() {
+    if block_query.is_empty()
+        || clear_query.is_empty()
+        || hand_block_query.is_empty()
+        || player_query.is_empty()
+    {
         return;
     }
-    let (hb_t, hb_b) = hand_block_query.single_mut();
 
-    let mut target_block_index = HashSet::new();
-    let mut target_block_translation = Vec2::NEG_INFINITY;
-    // 遍历所有方块，获取最外层方块的索引并添加到target_block_index中
-    for (b_t, _) in block_query.iter() {
-        let block_translation = b_t.translation;
-        target_block_translation.x = block_translation.x.max(target_block_translation.x);
-        target_block_translation.y = block_translation.y.max(target_block_translation.y);
+    let mut player_transform = player_query.single_mut();
+    let (mut hand_block_transform, mut hand_block_atlas) = hand_block_query.single_mut();
+
+    let block_number = block_query.iter().count();
+    let clear_number = clear_query.single().sections[0]
+        .value
+        .parse::<usize>()
+        .unwrap();
+
+    for _e in no_remove_event.read() {
+        // 如果方块数量小于等于消除数量，则获胜
+        if block_number <= clear_number {
+            println!("游戏胜利");
+            // next_state.set(GameState::MainMenu);
+
+            // 开始结算
+            next_state.set(SettlementState::Start);
+        } else {
+            let (player_x, player_y) = PLAYER_INIT_POS;
+            player_transform.translation = vec3(player_x, player_y, 1.0);
+            hand_block_transform.translation = vec3(player_x - STEP_SIZE as f32, player_y, 1.0);
+            hand_block_atlas.index = LIGHT_BLOCK_INDEX;
+        }
     }
-    for (b_t, b_b) in block_query.iter() {
-        let block_translation = b_t.translation;
-        if target_block_translation.x == block_translation.x
-            || target_block_translation.y == block_translation.y
-        {
-            target_block_index.insert(b_b.index);
+}
+
+// 判断是否有方块可以消除
+fn handle_no_remove_block_by_player(
+    mut no_remove_event: EventWriter<NoRemoveEvent>,
+    ladder_query: Query<&Transform, With<Ladder>>,
+    block_query: Query<(&Transform, &Block, &TextureAtlas), With<Block>>,
+    wall_query: Query<&Transform, (With<Wall>, Without<Block>)>,
+    hand_block_query: Query<&TextureAtlas, With<HandBlock>>,
+) {
+    if block_query.is_empty() || wall_query.is_empty() || ladder_query.is_empty() {
+        return;
+    }
+
+    let hand_block_atlas = hand_block_query.single();
+
+    let res_index = get_target_block_by_player_position(ladder_query, block_query, wall_query);
+
+    if res_index.contains(&hand_block_atlas.index) {
+        // 有可消除的方块
+    } else {
+        no_remove_event.send(NoRemoveEvent);
+    }
+}
+
+// 根据玩家位置判断目标方块
+fn get_target_block_by_player_position(
+    ladder_query: Query<&Transform, With<Ladder>>,
+    block_query: Query<(&Transform, &Block, &TextureAtlas), With<Block>>,
+    wall_query: Query<&Transform, (With<Wall>, Without<Block>)>,
+) -> HashSet<usize> {
+    let mut res_hashset = HashSet::new();
+
+    for ladder_transform in ladder_query.iter() {
+        let ladder_position = ladder_transform.translation.truncate();
+        let mut res_index = None;
+
+        // 基于y
+        let base_y = ladder_position.y;
+        // 基于 block
+        let mut base_block = false;
+
+        // 方块坐标
+        let mut block_x = None;
+        let mut block_y = None;
+
+        // 方块位置
+        for (block_transform, _block, _) in block_query.iter() {
+            if base_y == block_transform.translation.y {
+                block_y = Some(block_transform.translation.y);
+
+                if let Some(x) = block_x {
+                    block_x = Some(block_transform.translation.x.max(x));
+                } else {
+                    block_x = Some(block_transform.translation.x);
+                }
+
+                base_block = true;
+            }
+        }
+
+        if !base_block {
+            let mut wall_x = None;
+            let mut _wall_y = None;
+            // 获取墙体位置
+            for wall_transform in wall_query.iter() {
+                // wall_transform.translation.x < 0.0 表示墙体在左侧
+                if base_y == wall_transform.translation.y && wall_transform.translation.x < 0.0 {
+                    _wall_y = Some(wall_transform.translation.y);
+
+                    if let Some(x) = wall_x {
+                        wall_x = Some(wall_transform.translation.x.max(x));
+                    } else {
+                        wall_x = Some(wall_transform.translation.x);
+                    }
+                }
+            }
+
+            // 基于x
+            let base_x = wall_x.map(|x| x + STEP_SIZE as f32).unwrap_or(0.0);
+
+            // 遍历所有方块，获取最外层方块的坐标
+            for (block_transform, _, _) in block_query.iter() {
+                if base_x == block_transform.translation.x {
+                    block_x = Some(block_transform.translation.x);
+
+                    if let Some(y) = block_y {
+                        block_y = Some(block_transform.translation.y.max(y));
+                    } else {
+                        block_y = Some(block_transform.translation.y);
+                    }
+                }
+            }
+        }
+        // 获取最外层方块
+        for (block_transform, _, texture_atlas) in block_query.iter() {
+            match (block_x, block_y) {
+                (Some(x), Some(y)) => {
+                    if block_transform.translation.x == x && block_transform.translation.y == y {
+                        res_index = Some(texture_atlas.index)
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if let Some(index) = res_index {
+            res_hashset.insert(index);
         }
     }
 
-    if !target_block_index.contains(&hb_b.index) {
-        // 方块在目标方块内部，重置手里方块
-        println!(
-            "target_block_index: {:?} 手里的是：{:?}",
-            target_block_index, hb_b.index
-        );
-        println!("没有可消除的方块了");
-    }
+    return res_hashset;
 }

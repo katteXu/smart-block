@@ -10,6 +10,10 @@ use self::arrow::ArrowPlugin;
 #[derive(Component)]
 pub struct Player;
 
+// 梯子
+#[derive(Component)]
+pub struct Ladder;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {

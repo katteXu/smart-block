@@ -8,7 +8,7 @@ use crate::*;
 
 use crate::animation::AnimationTimer;
 use crate::block::{Block, HandBlock};
-use crate::player::Player;
+use crate::player::{Ladder, Player};
 use crate::resources::GlobalTextAtlas;
 use crate::wall::Ground;
 use crate::wall::Wall;
@@ -21,7 +21,7 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::GameInit), init_world)
-            .add_systems(OnExit(GameState::InGame), despawn_all_game_entities);
+            .add_systems(OnEnter(GameState::MainMenu), despawn_all_game_entities);
     }
 }
 
@@ -53,7 +53,7 @@ fn init_world(
     ));
 
     // 生成梯子
-    for i in 0..100 {
+    for i in 0..LADDER_NUM {
         commands.spawn((
             SpriteSheetBundle {
                 texture: handle.image.clone().unwrap(),
@@ -66,6 +66,7 @@ fn init_world(
                 ..default()
             },
             GameEntity,
+            Ladder,
         ));
     }
 
@@ -172,64 +173,66 @@ fn init_world(
 
     // 生成方块组
     let (x, y) = BLOCK_INIT_POS;
-    for j in 0..BLOCK_NUM_H {
-        for i in 0..BLOCK_NUM_W {
-            let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: texture_atlas_index,
-                    },
-                    transform: Transform::from_translation(vec3(
-                        x + (i * STEP_SIZE) as f32,
-                        y + (j * STEP_SIZE) as f32,
-                        0.0,
-                    ))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                },
-                Block {
-                    index: texture_atlas_index,
-                    show: true,
-                    pos: vec2(x + (i * STEP_SIZE) as f32, y + (j * STEP_SIZE) as f32),
-                },
-                GameEntity,
-            ));
-        }
-    }
-
-    // 测试固定渲染
-    // let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
-    // for pos_y in 0..group.len() {
-    //     for pos_x in 0..group[pos_y].len() {
-    //         let index = group[pos_y][pos_x];
-    //         if index > 0 {
-    //             commands.spawn((
-    //                 SpriteSheetBundle {
-    //                     texture: handle.image.clone().unwrap(),
-    //                     atlas: TextureAtlas {
-    //                         layout: handle.layout.clone().unwrap(),
-    //                         index: index,
-    //                     },
-    //                     transform: Transform::from_translation(vec3(
-    //                         x + (pos_x * STEP_SIZE) as f32,
-    //                         y + (pos_y * STEP_SIZE) as f32,
-    //                         0.0,
-    //                     ))
-    //                     .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-    //                     ..default()
+    // for j in 0..BLOCK_NUM_H {
+    //     for i in 0..BLOCK_NUM_W {
+    //         let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
+    //         commands.spawn((
+    //             SpriteSheetBundle {
+    //                 texture: handle.image.clone().unwrap(),
+    //                 atlas: TextureAtlas {
+    //                     layout: handle.layout.clone().unwrap(),
+    //                     index: texture_atlas_index,
     //                 },
-    //                 Block {
-    //                     index: index,
-    //                     show: true,
-    //                 },
-    //                 GameEntity,
-    //             ));
-    //         }
+    //                 transform: Transform::from_translation(vec3(
+    //                     x + (i * STEP_SIZE) as f32,
+    //                     y + (j * STEP_SIZE) as f32,
+    //                     0.0,
+    //                 ))
+    //                 .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+    //                 ..default()
+    //             },
+    //             Block {
+    //                 show: true,
+    //                 pos: vec2(x + (i * STEP_SIZE) as f32, y + (j * STEP_SIZE) as f32),
+    //             },
+    //             GameEntity,
+    //         ));
     //     }
     // }
+
+    // 测试固定渲染
+    let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
+    for pos_y in 0..group.len() {
+        for pos_x in 0..group[pos_y].len() {
+            let index = group[pos_y][pos_x];
+            if index > 0 {
+                commands.spawn((
+                    SpriteSheetBundle {
+                        texture: handle.image.clone().unwrap(),
+                        atlas: TextureAtlas {
+                            layout: handle.layout.clone().unwrap(),
+                            index: index,
+                        },
+                        transform: Transform::from_translation(vec3(
+                            x + (pos_x * STEP_SIZE) as f32,
+                            y + (pos_y * STEP_SIZE) as f32,
+                            0.0,
+                        ))
+                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                        ..default()
+                    },
+                    Block {
+                        show: true,
+                        pos: vec2(
+                            x + (pos_x * STEP_SIZE) as f32,
+                            y + (pos_y * STEP_SIZE) as f32,
+                        ),
+                    },
+                    GameEntity,
+                ));
+            }
+        }
+    }
 
     next_state.set(GameState::InGame);
 }

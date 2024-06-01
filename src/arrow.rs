@@ -70,6 +70,7 @@ fn update_arrow(
         return;
     }
     let (mut arrow_transform, mut arrow_visibility) = arrow_query.single_mut();
+
     if block_query.is_empty() {
         *arrow_visibility = Visibility::Hidden;
     }
@@ -79,6 +80,7 @@ fn update_arrow(
     // 基于block
     let mut base_block = false;
 
+    // 默认值 无线最小x , y 位置
     let mut target_block = Vec2::NEG_INFINITY;
 
     // 方块位置
