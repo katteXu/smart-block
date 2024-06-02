@@ -65,9 +65,13 @@ impl Plugin for GuiPlugin {
             .add_systems(OnEnter(GameState::InGame), spawn_gui)
             .add_systems(
                 Update,
-                (update_score, update_block_number, update_count_down)
+                (update_score, update_count_down)
                     .run_if(in_state(GameState::InGame))
                     .run_if(in_state(SettlementState::Not)),
+            )
+            .add_systems(
+                Update,
+                (update_count_down_text, update_block_number).run_if(in_state(GameState::InGame)),
             );
     }
 }
@@ -347,31 +351,40 @@ fn update_block_number(
     mut query: Query<&mut Text, With<BlockNum>>,
     block_query: Query<&Transform, With<Block>>,
 ) {
-    if query.is_empty() || block_query.is_empty() {
+    if query.is_empty() {
         return;
     }
-
     let mut text = query.single_mut();
-    let block_num = block_query.iter().count();
+    let block_num = if block_query.is_empty() {
+        0
+    } else {
+        block_query.iter().count()
+    };
 
     text.sections[0].value = format!("{}", block_num);
 }
 
-// 更新倒计时
+// 更新倒计时 如果结束则跳转状态
 fn update_count_down(
     time: Res<Time>,
     mut count_down: ResMut<CountDown>,
-    mut query: Query<&mut Text, With<TextCountDown>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if query.is_empty() {
-        return;
-    }
     count_down.0.tick(time.delta());
 
     if count_down.0.just_finished() {
         count_down.0.reset();
         next_state.set(GameState::MainMenu);
+        return;
+    }
+}
+
+// 更新倒计时文案
+fn update_count_down_text(
+    count_down: Res<CountDown>,
+    mut query: Query<&mut Text, With<TextCountDown>>,
+) {
+    if query.is_empty() {
         return;
     }
 

@@ -9,6 +9,7 @@ use crate::{resources::GlobalTextAtlas, state::GameState};
 
 use crate::block::Block;
 use crate::state::HandBlockState;
+use crate::state::SettlementState;
 use crate::wall::Wall;
 use crate::world::GameEntity;
 
@@ -28,12 +29,15 @@ impl Plugin for ArrowPlugin {
             )
             .add_systems(
                 OnEnter(HandBlockState::Idle),
-                handle_arrow_show.run_if(in_state(GameState::InGame)),
+                handle_arrow_show
+                    .run_if(in_state(GameState::InGame))
+                    .run_if(in_state(SettlementState::Not)),
             )
             .add_systems(
                 OnEnter(HandBlockState::Moving),
                 handle_arrow_hide.run_if(in_state(GameState::InGame)),
-            );
+            )
+            .add_systems(OnEnter(SettlementState::Start), handle_arrow_hide);
     }
 }
 

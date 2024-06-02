@@ -42,4 +42,7 @@ pub enum SettlementState {
     #[default]
     Not,
     Start,
+    DespawnBlock,
+    TimeToScore,
+    End,
 }
