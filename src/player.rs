@@ -1,3 +1,4 @@
+use bevy::input::keyboard::{self, Key, KeyboardInput};
 use bevy::math::vec3;
 use bevy::prelude::*;
 
@@ -5,6 +6,7 @@ use crate::state::{GameState, HandBlockState, PlayerState};
 use crate::*;
 
 use self::arrow::ArrowPlugin;
+use self::resources::GlobalAudio;
 
 // Player
 #[derive(Component)]
@@ -21,7 +23,12 @@ impl Plugin for PlayerPlugin {
         app.add_systems(
             Update,
             (
-                handle_player_movement.run_if(in_state(HandBlockState::Idle)),
+                (
+                    handle_player_movement,
+                    player_move_sound.run_if(has_user_input_up_or_down),
+                    player_throw_sound.run_if(has_user_input_space),
+                )
+                    .run_if(in_state(HandBlockState::Idle)),
                 handle_throw_block,
             )
                 .run_if(in_state(GameState::InGame)),
@@ -83,4 +90,37 @@ fn handle_throw_block(
         next_state.set(HandBlockState::Moving);
         *player_state = PlayerState::Throwing;
     }
+}
+
+// 播放玩家移动音效
+fn player_move_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(player_move_source) = audio_handles.player_move.clone() {
+        commands.spawn(AudioBundle {
+            source: player_move_source,
+            ..default()
+        });
+    }
+}
+//  播放玩家移动音效
+fn player_throw_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(player_throw_source) = audio_handles.player_throw.clone() {
+        commands.spawn(AudioBundle {
+            source: player_throw_source,
+            ..default()
+        });
+    }
+}
+
+pub fn has_user_input_up_or_down(keyboard_input: Res<ButtonInput<KeyCode>>) -> bool {
+    let arrow_up =
+        keyboard_input.just_pressed(KeyCode::ArrowUp) || keyboard_input.just_pressed(KeyCode::KeyW);
+
+    let arrow_down = keyboard_input.just_pressed(KeyCode::ArrowDown)
+        || keyboard_input.just_pressed(KeyCode::KeyS);
+
+    return arrow_up || arrow_down;
+}
+
+pub fn has_user_input_space(keyboard_input: Res<ButtonInput<KeyCode>>) -> bool {
+    keyboard_input.just_pressed(KeyCode::Space)
 }

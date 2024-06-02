@@ -13,6 +13,8 @@ use crate::resources::GlobalTextAtlas;
 use crate::wall::Ground;
 use crate::wall::Wall;
 
+use self::resources::GlobalAudio;
+
 #[derive(Component)]
 pub struct GameEntity;
 
@@ -21,7 +23,10 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::GameInit), init_world)
-            .add_systems(OnEnter(GameState::MainMenu), despawn_all_game_entities);
+            .add_systems(
+                OnEnter(GameState::MainMenu),
+                (despawn_all_game_entities, spawn_bgm),
+            );
     }
 }
 
@@ -243,5 +248,14 @@ fn despawn_all_game_entities(
 ) {
     for entity in game_entities.iter() {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn spawn_bgm(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(bgm) = audio_handles.background_music.clone() {
+        commands.spawn(AudioBundle {
+            source: bgm,
+            ..default()
+        });
     }
 }

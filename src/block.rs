@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::time::Duration;
 
 use bevy::math::vec3;
 use bevy::prelude::*;
@@ -12,6 +13,7 @@ use crate::gui::TextScore;
 
 use self::gui::ClearNum;
 
+use self::resources::GlobalAudio;
 use self::wall::Wall;
 
 // Block
@@ -77,6 +79,7 @@ impl Plugin for BlockPlugin {
         app.init_state::<HandBlockState>()
             .init_state::<BlockGroupState>()
             .init_resource::<RemoveBlockResource>()
+            .init_resource::<SoundTimer>()
             .add_event::<NoRemoveEvent>()
             .add_systems(
                 Update,
@@ -94,17 +97,35 @@ impl Plugin for BlockPlugin {
                 Update,
                 handle_block_fall_down.run_if(in_state(BlockGroupState::FallDown)),
             )
+            .add_systems(OnExit(BlockGroupState::FallDown), block_fall_down_sound)
             .add_systems(Update, handle_game_over.run_if(in_state(GameState::InGame)))
             .add_systems(
                 OnEnter(BlockGroupState::Static),
                 handle_no_remove_block_by_player.run_if(in_state(GameState::InGame)),
             );
+        // .add_systems(
+        //     Update,
+        //     hand_block_hit_sound
+        //         .run_if(in_state(HandBlockState::Moving))
+        //         .run_if(on_timer(Duration::from_secs_f32(0.2))),
+        // );
+    }
+}
+
+#[derive(Resource)]
+struct SoundTimer(Timer);
+impl Default for SoundTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(0.2, TimerMode::Once))
     }
 }
 
 // 处理方块消除
 fn handle_block_remove(
+    time: Res<Time>,
     mut commands: Commands,
+    mut timer: Local<SoundTimer>,
+    audio_handles: Res<GlobalAudio>,
     mut remove_block_resource: ResMut<RemoveBlockResource>,
     mut score_query: Query<&mut TextScore, With<TextScore>>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
@@ -114,6 +135,7 @@ fn handle_block_remove(
     if query.is_empty() || hand_block_query.is_empty() || score_query.is_empty() {
         return;
     }
+
     let mut text_score = score_query.single_mut();
     // 消除块数
     let mut remove_blocks = vec![];
@@ -126,6 +148,14 @@ fn handle_block_remove(
             remove_blocks.push(RemoveBlock {
                 pos: transform.translation.truncate(),
             });
+
+            // 生成消除声效
+            if let Some(hand_block_hit_block_sound) = audio_handles.hand_block_hit_block.clone() {
+                commands.spawn(AudioBundle {
+                    source: hand_block_hit_block_sound,
+                    ..default()
+                });
+            }
 
             next_state.set(BlockGroupState::FallDown);
         }
@@ -393,4 +423,24 @@ fn get_target_block_by_player_position(
     }
 
     return res_hashset;
+}
+
+// 播放碰撞方块音效
+fn hand_block_hit_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(hand_block_hit_block_sound) = audio_handles.hand_block_hit_block.clone() {
+        commands.spawn(AudioBundle {
+            source: hand_block_hit_block_sound,
+            ..default()
+        });
+    }
+}
+
+// 播放下落方块音效
+fn block_fall_down_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(block_fall_down_sound) = audio_handles.block_fall_down.clone() {
+        commands.spawn(AudioBundle {
+            source: block_fall_down_sound,
+            ..default()
+        });
+    }
 }

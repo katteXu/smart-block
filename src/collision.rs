@@ -4,14 +4,13 @@ use bevy::math::vec3;
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use kd_tree::{KdPoint, KdTree};
 
-use crate::block::{Block, HandBlock};
-use crate::state::{GameState, HandBlockState};
-use crate::*;
-
 use crate::block::Direction;
+use crate::block::{Block, HandBlock};
+use crate::player::Player;
+use crate::resources::GlobalAudio;
+use crate::state::{GameState, HandBlockState};
 use crate::wall::{Ground, Wall};
-
-use self::player::Player;
+use crate::*;
 
 #[derive(Component, Debug)]
 pub struct Collidable {
@@ -126,7 +125,10 @@ impl Plugin for CollisionPlugin {
             )
             .add_systems(
                 OnEnter(HandBlockState::Backing),
-                lighting_first_remove_block_index_reset,
+                (
+                    lighting_first_remove_block_index_reset,
+                    hand_block_back_sound,
+                ),
             );
     }
 }
@@ -384,5 +386,15 @@ fn handle_collision_back_animation(
                 player_transform.translation.z,
             ),
         ]]);
+    }
+}
+
+// 返回声音
+fn hand_block_back_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+    if let Some(hand_block_black_source) = audio_handles.hand_block_black.clone() {
+        commands.spawn(AudioBundle {
+            source: hand_block_black_source,
+            ..default()
+        });
     }
 }

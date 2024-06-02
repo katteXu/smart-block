@@ -18,17 +18,53 @@ impl Default for GlobalTextAtlas {
     }
 }
 
+#[derive(Resource)]
+pub struct GlobalAudio {
+    // 用户移动
+    pub player_move: Option<Handle<AudioSource>>,
+    // 用户投掷
+    pub player_throw: Option<Handle<AudioSource>>,
+    // 手里块
+    pub hand_block_hit_block: Option<Handle<AudioSource>>,
+    pub hand_block_hit_wall: Option<Handle<AudioSource>>,
+    pub hand_block_hit_groud: Option<Handle<AudioSource>>,
+    pub hand_block_black: Option<Handle<AudioSource>>,
+    // 方块
+    pub block_fall_down: Option<Handle<AudioSource>>,
+    pub block_despawn: Option<Handle<AudioSource>>,
+
+    // 背景音乐
+    pub background_music: Option<Handle<AudioSource>>,
+}
+impl Default for GlobalAudio {
+    fn default() -> Self {
+        Self {
+            player_move: None,
+            player_throw: None,
+            hand_block_hit_block: None,
+            hand_block_hit_wall: None,
+            hand_block_hit_groud: None,
+            block_fall_down: None,
+            block_despawn: None,
+            background_music: None,
+            hand_block_black: None,
+        }
+    }
+}
+
 pub struct ResourcesPlugin;
 
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(GlobalTextAtlas::default())
+            .insert_resource(GlobalAudio::default())
             .add_systems(OnEnter(GameState::Loading), load_assets);
     }
 }
 
 fn load_assets(
     mut handle: ResMut<GlobalTextAtlas>,
+    mut audio_handle: ResMut<GlobalAudio>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut next_state: ResMut<NextState<GameState>>,
@@ -46,6 +82,15 @@ fn load_assets(
 
     // 资源网格
     handle.layout = Some(texture_atlas_layouts.add(layout));
+
+    // 资源声音
+    audio_handle.player_move = Some(asset_server.load("audio/move.ogg"));
+    audio_handle.player_throw = Some(asset_server.load("audio/throw.ogg"));
+    audio_handle.hand_block_black = Some(asset_server.load("audio/back.ogg"));
+    audio_handle.hand_block_hit_block = Some(asset_server.load("audio/hit_block.wav"));
+    // audio_handle.block_fall_down = Some(asset_server.load("audio/block_fall_down.wav"));
+
+    audio_handle.background_music = Some(asset_server.load("audio/bgm.mp3"));
 
     next_state.set(GameState::MainMenu);
 }
