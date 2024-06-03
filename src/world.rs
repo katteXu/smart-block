@@ -1,3 +1,4 @@
+use bevy::audio::PlaybackMode;
 use bevy::math::{vec2, vec3};
 use bevy::prelude::*;
 #[allow(unused)]
@@ -14,6 +15,7 @@ use crate::wall::Ground;
 use crate::wall::Wall;
 
 use self::resources::GlobalAudio;
+use self::stage::Stage;
 
 #[derive(Component)]
 pub struct GameEntity;
@@ -22,18 +24,21 @@ pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::GameInit), init_world)
-            .add_systems(
-                OnEnter(GameState::MainMenu),
-                (despawn_all_game_entities, spawn_bgm),
-            );
+        app
+            // 进入主菜单 开始bgm
+            .add_systems(OnEnter(GameState::MainMenu), spawn_bgm)
+            // 初始化游戏
+            .add_systems(OnEnter(GameState::GameInit), init_world)
+            // 退出游戏 销毁所有
+            .add_systems(OnExit(GameState::InGame), despawn_all_game_entities);
     }
 }
 
 // 初始化游戏世界
-fn init_world(
+pub fn init_world(
     mut commands: Commands,
     handle: ResMut<GlobalTextAtlas>,
+    stage: Res<Stage>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     let mut rng = rand::thread_rng();
@@ -178,71 +183,71 @@ fn init_world(
 
     // 生成方块组
     let (x, y) = BLOCK_INIT_POS;
-    // for j in 0..BLOCK_NUM_H {
-    //     for i in 0..BLOCK_NUM_W {
-    //         let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
-    //         commands.spawn((
-    //             SpriteSheetBundle {
-    //                 texture: handle.image.clone().unwrap(),
-    //                 atlas: TextureAtlas {
-    //                     layout: handle.layout.clone().unwrap(),
-    //                     index: texture_atlas_index,
-    //                 },
-    //                 transform: Transform::from_translation(vec3(
-    //                     x + (i * STEP_SIZE) as f32,
-    //                     y + (j * STEP_SIZE) as f32,
-    //                     0.0,
-    //                 ))
-    //                 .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-    //                 ..default()
-    //             },
-    //             Block {
-    //                 show: true,
-    //                 pos: vec2(x + (i * STEP_SIZE) as f32, y + (j * STEP_SIZE) as f32),
-    //             },
-    //             GameEntity,
-    //         ));
-    //     }
-    // }
-
-    // 测试固定渲染
-    let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
-    for pos_y in 0..group.len() {
-        for pos_x in 0..group[pos_y].len() {
-            let index = group[pos_y][pos_x];
-            if index > 0 {
-                commands.spawn((
-                    SpriteSheetBundle {
-                        texture: handle.image.clone().unwrap(),
-                        atlas: TextureAtlas {
-                            layout: handle.layout.clone().unwrap(),
-                            index: index,
-                        },
-                        transform: Transform::from_translation(vec3(
-                            x + (pos_x * STEP_SIZE) as f32,
-                            y + (pos_y * STEP_SIZE) as f32,
-                            0.0,
-                        ))
-                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                        ..default()
+    for j in 0..BLOCK_NUM_H {
+        for i in 0..BLOCK_NUM_W {
+            let texture_atlas_index = rng.gen_range(BLOCK_DISPLAY_RANGE);
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture: handle.image.clone().unwrap(),
+                    atlas: TextureAtlas {
+                        layout: handle.layout.clone().unwrap(),
+                        index: texture_atlas_index,
                     },
-                    Block {
-                        show: true,
-                        pos: vec2(
-                            x + (pos_x * STEP_SIZE) as f32,
-                            y + (pos_y * STEP_SIZE) as f32,
-                        ),
-                    },
-                    GameEntity,
-                ));
-            }
+                    transform: Transform::from_translation(vec3(
+                        x + (i * STEP_SIZE) as f32,
+                        y + (j * STEP_SIZE) as f32,
+                        0.0,
+                    ))
+                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+                    ..default()
+                },
+                Block {
+                    show: true,
+                    pos: vec2(x + (i * STEP_SIZE) as f32, y + (j * STEP_SIZE) as f32),
+                },
+                GameEntity,
+            ));
         }
     }
+
+    // 测试固定渲染
+    // let group = TEST_BLOCK_POS.iter().rev().cloned().collect::<Vec<_>>();
+    // for pos_y in 0..group.len() {
+    //     for pos_x in 0..group[pos_y].len() {
+    //         let index = group[pos_y][pos_x];
+    //         if index > 0 {
+    //             commands.spawn((
+    //                 SpriteSheetBundle {
+    //                     texture: handle.image.clone().unwrap(),
+    //                     atlas: TextureAtlas {
+    //                         layout: handle.layout.clone().unwrap(),
+    //                         index: index,
+    //                     },
+    //                     transform: Transform::from_translation(vec3(
+    //                         x + (pos_x * STEP_SIZE) as f32,
+    //                         y + (pos_y * STEP_SIZE) as f32,
+    //                         0.0,
+    //                     ))
+    //                     .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
+    //                     ..default()
+    //                 },
+    //                 Block {
+    //                     show: true,
+    //                     pos: vec2(
+    //                         x + (pos_x * STEP_SIZE) as f32,
+    //                         y + (pos_y * STEP_SIZE) as f32,
+    //                     ),
+    //                 },
+    //                 GameEntity,
+    //             ));
+    //         }
+    //     }
+    // }
 
     next_state.set(GameState::InGame);
 }
 
-fn despawn_all_game_entities(
+pub fn despawn_all_game_entities(
     mut commands: Commands,
     game_entities: Query<Entity, With<GameEntity>>,
 ) {
@@ -251,10 +256,15 @@ fn despawn_all_game_entities(
     }
 }
 
+// 生成BGM
 fn spawn_bgm(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
     if let Some(bgm) = audio_handles.background_music.clone() {
         commands.spawn(AudioBundle {
             source: bgm,
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Loop,
+                ..default()
+            },
             ..default()
         });
     }

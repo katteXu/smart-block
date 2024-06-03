@@ -6,17 +6,22 @@ use crate::state::GameState;
 use crate::world::GameEntity;
 use crate::*;
 
+use self::stage::Stage;
 use self::state::SettlementState;
 
 pub struct GuiPlugin;
 
 // UI 分数
 #[derive(Component)]
-pub struct TextScore {
+pub struct TextScore;
+
+#[derive(Resource)]
+pub struct Score {
     pub total_score: u32,
     pub once_remove_block: u32,
 }
-impl Default for TextScore {
+
+impl Default for Score {
     fn default() -> Self {
         Self {
             total_score: 0,
@@ -47,21 +52,22 @@ pub struct ClearNum;
 #[derive(Component)]
 pub struct BlockNum;
 
-#[derive(Component)]
-pub struct Stage;
+// #[derive(Component)]
+// pub struct Stage;
 
 #[derive(Resource)]
 pub struct CountDown(pub Timer);
 
 impl Default for CountDown {
     fn default() -> Self {
-        Self(Timer::from_seconds(180.0, TimerMode::Once))
+        Self(Timer::from_seconds(180.0, TimerMode::Repeating))
     }
 }
 
 impl Plugin for GuiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CountDown>()
+            .init_resource::<Score>()
             .add_systems(OnEnter(GameState::InGame), spawn_gui)
             .add_systems(
                 Update,
@@ -77,7 +83,12 @@ impl Plugin for GuiPlugin {
 }
 
 // 生成游戏内UI
-fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_gui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    stage: Res<Stage>,
+    score: Res<Score>,
+) {
     // 分数
     commands
         .spawn((
@@ -114,7 +125,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent.spawn((
                 TextBundle {
                     text: Text::from_section(
-                        "0000000",
+                        format!("{:0>7}", score.total_score),
                         TextStyle {
                             font: asset_server.load(FONT_PATH),
                             font_size: 28.0,
@@ -124,7 +135,7 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ),
                     ..Default::default()
                 },
-                TextScore::default(),
+                TextScore,
             ));
         });
 
@@ -305,44 +316,41 @@ fn spawn_gui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             });
 
-            parent.spawn((
-                TextBundle {
-                    text: Text::from_section(
-                        "1",
-                        TextStyle {
-                            font: asset_server.load(FONT_PATH),
-                            font_size: 32.0,
-                            color: Color::WHITE,
-                            ..default()
-                        },
-                    ),
-                    ..Default::default()
-                },
-                Stage,
-            ));
+            parent.spawn((TextBundle {
+                text: Text::from_section(
+                    stage.0.to_string(),
+                    TextStyle {
+                        font: asset_server.load(FONT_PATH),
+                        font_size: 32.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                ),
+                ..Default::default()
+            },));
         });
 }
 
 // 更新分数
 fn update_score(
     commands: Commands,
+    mut score: ResMut<Score>,
     asset_server: Res<AssetServer>,
-    mut query: Query<(&mut Text, &mut TextScore), With<TextScore>>,
+    mut text_score_query: Query<&mut Text, With<TextScore>>,
 ) {
-    if query.is_empty() {
+    if text_score_query.is_empty() {
         return;
     }
+    let mut text_score = text_score_query.single_mut();
 
-    let (mut text, mut text_score) = query.single_mut();
-
-    if text_score.once_remove_block > 0 {
-        let once_score = text_score.once_remove_block.pow(2) * ONEC_BLOCK_SCORE;
-        text_score.total_score += once_score;
-        if text_score.once_remove_block > 1 {
+    if score.once_remove_block > 0 {
+        let once_score = score.once_remove_block.pow(2) * ONEC_BLOCK_SCORE;
+        score.total_score += once_score;
+        if score.once_remove_block > 1 {
             spawn_hight_score(commands, asset_server.load(FONT_PATH), once_score);
         }
-        text_score.once_remove_block = 0;
-        text.sections[0].value = format!("{:0>7}", text_score.total_score);
+        score.once_remove_block = 0;
+        text_score.sections[0].value = format!("{:0>7}", score.total_score);
     }
 }
 

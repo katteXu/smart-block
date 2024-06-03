@@ -11,7 +11,7 @@ use crate::player::{Ladder, Player};
 
 use crate::gui::TextScore;
 
-use self::gui::ClearNum;
+use self::gui::{ClearNum, Score};
 
 use self::resources::GlobalAudio;
 use self::wall::Wall;
@@ -126,17 +126,16 @@ fn handle_block_remove(
     mut commands: Commands,
     mut timer: Local<SoundTimer>,
     audio_handles: Res<GlobalAudio>,
+    mut score: ResMut<Score>,
     mut remove_block_resource: ResMut<RemoveBlockResource>,
-    mut score_query: Query<&mut TextScore, With<TextScore>>,
     mut query: Query<(&mut Transform, &mut Block, Entity), With<Block>>,
     hand_block_query: Query<&Transform, (With<HandBlock>, Without<Block>)>,
     mut next_state: ResMut<NextState<BlockGroupState>>,
 ) {
-    if query.is_empty() || hand_block_query.is_empty() || score_query.is_empty() {
+    if query.is_empty() || hand_block_query.is_empty() {
         return;
     }
 
-    let mut text_score = score_query.single_mut();
     // 消除块数
     let mut remove_blocks = vec![];
 
@@ -161,7 +160,7 @@ fn handle_block_remove(
         }
     }
     // 分数计算
-    text_score.once_remove_block = remove_blocks.len() as u32;
+    score.once_remove_block = remove_blocks.len() as u32;
 
     // 移除方块resource
     if remove_blocks.len() > 0 {
@@ -300,7 +299,6 @@ fn handle_game_over(
         // 如果方块数量小于等于消除数量，则获胜
         if block_number <= clear_number {
             println!("游戏胜利");
-            // next_state.set(GameState::MainMenu);
 
             // 开始结算
             next_state.set(SettlementState::Start);

@@ -9,6 +9,7 @@ pub mod main_menu;
 pub mod player;
 pub mod resources;
 pub mod settlement;
+pub mod stage;
 pub mod state;
 pub mod wall;
 pub mod world;

@@ -9,6 +9,7 @@ use bevy_smart_block::main_menu::MainMenuPlugin;
 use bevy_smart_block::player::PlayerPlugin;
 use bevy_smart_block::resources::ResourcesPlugin;
 use bevy_smart_block::settlement::SettlementPlugin;
+use bevy_smart_block::stage::StagePlugin;
 use bevy_smart_block::state::GameState;
 use bevy_smart_block::world::WorldPlugin;
 use bevy_smart_block::*;
@@ -44,6 +45,7 @@ fn main() {
         .add_plugins(CollisionPlugin)
         .add_plugins(AnimationPlugin)
         .add_plugins(SettlementPlugin)
+        .add_plugins(StagePlugin)
         .add_systems(Update, close_on_esc)
         .add_systems(
             Update,

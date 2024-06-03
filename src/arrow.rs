@@ -20,7 +20,7 @@ struct Arrow;
 
 impl Plugin for ArrowPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::GameInit), spawn_arrow)
+        app.add_systems(OnEnter(GameState::InGame), spawn_arrow)
             .add_systems(
                 Update,
                 update_arrow
@@ -41,9 +41,18 @@ impl Plugin for ArrowPlugin {
     }
 }
 
-fn spawn_arrow(mut commands: Commands, handle: ResMut<GlobalTextAtlas>) {
+fn spawn_arrow(
+    mut commands: Commands,
+    handle: ResMut<GlobalTextAtlas>,
+    player_query: Query<&Transform, With<Player>>,
+) {
     // 生成箭头
     let (x, y) = PLAYER_INIT_POS;
+
+    if player_query.is_empty() {
+        return;
+    }
+
     commands.spawn((
         SpriteSheetBundle {
             texture: handle.image.clone().unwrap(),

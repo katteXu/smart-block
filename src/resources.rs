@@ -33,6 +33,8 @@ pub struct GlobalAudio {
     pub block_fall_down: Option<Handle<AudioSource>>,
     pub block_despawn: Option<Handle<AudioSource>>,
 
+    // 时间清空
+    pub time_clear: Option<Handle<AudioSource>>,
     // 背景音乐
     pub background_music: Option<Handle<AudioSource>>,
 }
@@ -48,6 +50,7 @@ impl Default for GlobalAudio {
             block_despawn: None,
             background_music: None,
             hand_block_black: None,
+            time_clear: None,
         }
     }
 }
@@ -84,13 +87,14 @@ fn load_assets(
     handle.layout = Some(texture_atlas_layouts.add(layout));
 
     // 资源声音
-    audio_handle.player_move = Some(asset_server.load("audio/move.ogg"));
-    audio_handle.player_throw = Some(asset_server.load("audio/throw.ogg"));
-    audio_handle.hand_block_black = Some(asset_server.load("audio/back.ogg"));
-    audio_handle.hand_block_hit_block = Some(asset_server.load("audio/hit_block.wav"));
-    // audio_handle.block_fall_down = Some(asset_server.load("audio/block_fall_down.wav"));
+    audio_handle.player_move = Some(asset_server.load("embedded://audio/move.ogg"));
+    audio_handle.player_throw = Some(asset_server.load("embedded://audio/throw.ogg"));
+    audio_handle.hand_block_black = Some(asset_server.load("embedded://audio/back.ogg"));
+    audio_handle.hand_block_hit_block = Some(asset_server.load("embedded://audio/hit_block.wav"));
+    // audio_handle.block_fall_down = Some(asset_server.load("embedded://audio/block_fall_down.wav"));
+    audio_handle.time_clear = Some(asset_server.load("embedded://audio/success_bell.wav"));
 
-    audio_handle.background_music = Some(asset_server.load("audio/bgm.mp3"));
+    audio_handle.background_music = Some(asset_server.load("embedded://audio/bgm.mp3"));
 
     next_state.set(GameState::MainMenu);
 }

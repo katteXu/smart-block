@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use bevy::audio::PlaybackMode;
+use bevy::audio::Volume;
 use bevy::prelude::*;
 
 use crate::block::Block;
@@ -8,6 +10,10 @@ use crate::gui::TextScore;
 use crate::state::{GameState, SettlementState};
 use crate::world::GameEntity;
 use crate::*;
+
+use self::gui::Score;
+use self::resources::GlobalAudio;
+use self::stage::Stage;
 
 pub struct SettlementPlugin;
 
@@ -25,7 +31,7 @@ impl Default for TimeToScore {
 struct SettleStartTimer(Timer);
 impl Default for SettleStartTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(1.0, TimerMode::Once))
+        Self(Timer::from_seconds(1.0, TimerMode::Repeating))
     }
 }
 
@@ -186,6 +192,8 @@ fn time_to_score(
     mut time_to_score_text_query: Query<&mut Text, With<TextTimeToScore>>,
     mut remain_time: Local<RemainTime>,
     mut next_state: ResMut<NextState<SettlementState>>,
+    mut commands: Commands,
+    audio_handles: Res<GlobalAudio>,
 ) {
     if time_to_score_text_query.is_empty() {
         return;
@@ -212,6 +220,16 @@ fn time_to_score(
 
     if count_down.0.just_finished() {
         println!("清算倒计时结束");
+        if let Some(time_clear_sound) = audio_handles.time_clear.clone() {
+            commands.spawn(AudioBundle {
+                source: time_clear_sound,
+                settings: PlaybackSettings {
+                    // mode: PlaybackMode::Once,
+                    // volume: Volume::new(2.0),
+                    ..default()
+                },
+            });
+        }
         if let Some(time) = remain_time.0 {
             time_to_score.0 = (time * EVERY_SECOND_SCORE) as u64;
             time_to_score_text.sections[0].value = format!("time score: {:0>5}", time_to_score.0);
@@ -224,17 +242,25 @@ fn time_to_score(
 // 局部分数更新总分数
 fn update_total_score(
     mut time_to_score: ResMut<TimeToScore>,
-    mut query: Query<(&mut Text, &mut TextScore), With<TextScore>>,
+    mut stage: ResMut<Stage>,
+    mut score: ResMut<Score>,
+    mut query: Query<&mut Text, With<TextScore>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut settlement_next_state: ResMut<NextState<SettlementState>>,
 ) {
     if query.is_empty() {
         return;
     }
-    let (mut text, mut text_score) = query.single_mut();
-    text_score.total_score += time_to_score.0 as u32;
-    text.sections[0].value = format!("{:0>7}", text_score.total_score);
+    let mut text = query.single_mut();
+    score.total_score += time_to_score.0 as u32;
+    text.sections[0].value = format!("{:0>7}", score.total_score);
 
+    println!("更新总分完成");
     // 清空局部分数
     time_to_score.0 = 0;
 
-    println!("更新总分完成");
+    // 更新关卡
+    stage.0 += 1;
+    next_state.set(GameState::GameInit);
+    settlement_next_state.set(SettlementState::Not);
 }
