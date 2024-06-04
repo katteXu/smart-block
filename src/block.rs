@@ -9,6 +9,8 @@ use crate::state::{BlockGroupState, GameState, HandBlockState, SettlementState};
 use crate::wall::Wall;
 use crate::*;
 
+use self::alert::AlertEvent;
+
 // Block
 #[derive(Component, Debug)]
 pub struct Block {
@@ -92,7 +94,7 @@ impl Plugin for BlockPlugin {
             .add_systems(OnExit(BlockGroupState::FallDown), block_fall_down_sound)
             .add_systems(Update, handle_game_over.run_if(in_state(GameState::InGame)))
             .add_systems(
-                OnEnter(BlockGroupState::Static),
+                OnExit(HandBlockState::Backing),
                 handle_no_remove_block_by_player.run_if(in_state(GameState::InGame)),
             );
         // .add_systems(
@@ -254,6 +256,7 @@ fn handle_block_fall_down(
 // 处理游戏结束
 fn handle_game_over(
     mut no_remove_event: EventReader<NoRemoveEvent>,
+    mut alert_event: EventWriter<AlertEvent>,
     mut hand_block_query: Query<(&mut Transform, &mut TextureAtlas), With<HandBlock>>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<HandBlock>)>,
     block_query: Query<(), With<Block>>,
@@ -285,6 +288,9 @@ fn handle_game_over(
             // 开始结算
             next_state.set(SettlementState::Start);
         } else {
+            alert_event.send(AlertEvent(Some(String::from(
+                "Can't Remove\nGive You A LightningBlock.",
+            ))));
             let (player_x, player_y) = PLAYER_INIT_POS;
             player_transform.translation = vec3(player_x, player_y, 1.0);
             hand_block_transform.translation = vec3(player_x - STEP_SIZE as f32, player_y, 1.0);

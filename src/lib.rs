@@ -1,3 +1,4 @@
+pub mod alert;
 pub mod animation;
 pub mod arrow;
 pub mod block;

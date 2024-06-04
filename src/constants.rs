@@ -51,7 +51,7 @@ pub const STAGE_TEXT: &str = "STAGE";
 // UI SCORE
 pub const SCORE_BLOCK_WIDTH: f32 = 220.0;
 pub const SCORE_BLOCK_POS: (f32, f32) = (48.0, 18.0);
-pub const ONEC_BLOCK_SCORE: u32 = 100;
+pub const ONCE_BLOCK_SCORE: u32 = 100;
 pub const HIGH_SCORE_POS_PERCENT: (f32, f32) = (-300.0, 100.0);
 pub const HIGH_SCORE_ANIMATION_DURATION: f32 = 0.5;
 pub const HIGH_SCORE_ANIMATION_SPEED: f32 = 64.0;
@@ -75,10 +75,10 @@ pub const RIGHT_BLOCK_HEIGHT: f32 = 96.0;
 // 元素精灵图索引 8-13
 pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [
     // stage1
-    [13, 11, 11, 11, 0],
-    [8, 13, 13, 13, 0],
-    [9, 9, 9, 9, 0],
-    [11, 8, 8, 8, 0],
+    // [13, 11, 11, 11, 0],
+    // [8, 13, 13, 13, 0],
+    // [9, 9, 9, 9, 0],
+    // [11, 8, 8, 8, 0],
     // stage2
     // [13, 8, 8, 8, 0],
     // [11, 8, 13, 8, 0],
@@ -86,8 +86,8 @@ pub const TEST_BLOCK_POS: [[usize; 5]; 4] = [
     // [13, 8, 13, 8, 0],
 
     // stage test
-    // [0, 0, 0, 0, 0],
-    // [10, 0, 0, 0, 0],
-    // [9, 11, 0, 0, 0],
-    // [13, 8, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [10, 0, 0, 0, 0],
+    [9, 11, 0, 0, 0],
+    [13, 8, 0, 0, 0],
 ];
