@@ -2,12 +2,10 @@ use bevy::math::vec3;
 use bevy::prelude::*;
 
 use crate::block::Block;
-use crate::state::GameState;
+use crate::stage::Stage;
+use crate::state::{GameState, SettlementState};
 use crate::world::GameEntity;
 use crate::*;
-
-use self::stage::Stage;
-use self::state::SettlementState;
 
 pub struct GuiPlugin;
 
@@ -52,15 +50,12 @@ pub struct ClearNum;
 #[derive(Component)]
 pub struct BlockNum;
 
-// #[derive(Component)]
-// pub struct Stage;
-
 #[derive(Resource)]
 pub struct CountDown(pub Timer);
 
 impl Default for CountDown {
     fn default() -> Self {
-        Self(Timer::from_seconds(180.0, TimerMode::Repeating))
+        Self(Timer::from_seconds(COUNT_DOWN_SEC, TimerMode::Repeating))
     }
 }
 
@@ -78,7 +73,8 @@ impl Plugin for GuiPlugin {
             .add_systems(
                 Update,
                 (update_count_down_text, update_block_number).run_if(in_state(GameState::InGame)),
-            );
+            )
+            .add_systems(OnEnter(GameState::MainMenu), reset_resources);
     }
 }
 
@@ -424,4 +420,15 @@ pub fn spawn_hight_score(mut commands: Commands, font_handle: Handle<Font>, scor
         HighScore::default(),
         GameEntity,
     ));
+}
+
+// 重置资源
+fn reset_resources(
+    mut total_score: ResMut<Score>,
+    mut stage: ResMut<Stage>,
+    mut count_down: ResMut<CountDown>,
+) {
+    total_score.total_score = 0;
+    stage.0 = 1;
+    count_down.0.reset();
 }

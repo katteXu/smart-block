@@ -1,12 +1,10 @@
-use bevy::input::keyboard::{self, Key, KeyboardInput};
 use bevy::math::vec3;
 use bevy::prelude::*;
 
+use crate::arrow::ArrowPlugin;
+use crate::resources::GlobalAudio;
 use crate::state::{GameState, HandBlockState, PlayerState};
 use crate::*;
-
-use self::arrow::ArrowPlugin;
-use self::resources::GlobalAudio;
 
 // Player
 #[derive(Component)]
@@ -101,7 +99,8 @@ fn player_move_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
         });
     }
 }
-//  播放玩家移动音效
+
+//  播放玩家抛出音效
 fn player_throw_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
     if let Some(player_throw_source) = audio_handles.player_throw.clone() {
         commands.spawn(AudioBundle {
@@ -111,6 +110,7 @@ fn player_throw_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
     }
 }
 
+// 玩家是否按下了上下方向键
 pub fn has_user_input_up_or_down(keyboard_input: Res<ButtonInput<KeyCode>>) -> bool {
     let arrow_up =
         keyboard_input.just_pressed(KeyCode::ArrowUp) || keyboard_input.just_pressed(KeyCode::KeyW);
@@ -121,6 +121,7 @@ pub fn has_user_input_up_or_down(keyboard_input: Res<ButtonInput<KeyCode>>) -> b
     return arrow_up || arrow_down;
 }
 
+// 玩家是否按下了空格键
 pub fn has_user_input_space(keyboard_input: Res<ButtonInput<KeyCode>>) -> bool {
     keyboard_input.just_pressed(KeyCode::Space)
 }

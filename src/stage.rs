@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
+use crate::state::GameState;
 use crate::*;
-
-use self::state::GameState;
 
 #[derive(Resource)]
 pub struct Stage(pub usize);

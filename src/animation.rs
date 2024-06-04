@@ -25,6 +25,7 @@ impl Plugin for AnimationPlugin {
     }
 }
 
+// 动画计时器
 fn animate_timer_tick(
     time: Res<Time>,
     mut query: Query<&mut AnimationTimer, With<AnimationTimer>>,
@@ -34,6 +35,7 @@ fn animate_timer_tick(
     }
 }
 
+// 玩家动画  变更上下或者抛出方块
 fn player_animation(
     mut query: Query<(&mut TextureAtlas, &mut PlayerState, &mut AnimationTimer), With<Player>>,
 ) {

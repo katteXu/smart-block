@@ -1,4 +1,3 @@
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
 
 use crate::state::GameState;
@@ -10,8 +9,7 @@ pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FrameTimeDiagnosticsPlugin)
-            .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
+        app.add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
             .add_systems(OnExit(GameState::MainMenu), despawn_main_menu)
             .add_systems(
                 Update,
@@ -20,6 +18,7 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
+// 生成主菜单
 fn setup_main_menu(mut commands: Commands) {
     commands
         .spawn(NodeBundle {
@@ -60,6 +59,7 @@ fn setup_main_menu(mut commands: Commands) {
         .insert(MainMenuItem);
 }
 
+// 移除主菜单
 fn despawn_main_menu(main_menu_query: Query<Entity, With<MainMenuItem>>, mut commands: Commands) {
     // despawn main menu
     for entity in main_menu_query.iter() {
@@ -67,6 +67,7 @@ fn despawn_main_menu(main_menu_query: Query<Entity, With<MainMenuItem>>, mut com
     }
 }
 
+// 主菜单按钮
 fn handle_main_menu_buttons(
     mut interaction_query: Query<
         (

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::state::GameState;
 use crate::*;
+
 // Resource
 #[derive(Resource)]
 pub struct GlobalTextAtlas {

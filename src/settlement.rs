@@ -1,19 +1,13 @@
+use bevy::prelude::*;
 use std::time::Duration;
 
-use bevy::audio::PlaybackMode;
-use bevy::audio::Volume;
-use bevy::prelude::*;
-
 use crate::block::Block;
-use crate::gui::CountDown;
-use crate::gui::TextScore;
+use crate::gui::{CountDown, Score, TextScore};
+use crate::resources::GlobalAudio;
+use crate::stage::Stage;
 use crate::state::{GameState, SettlementState};
 use crate::world::GameEntity;
 use crate::*;
-
-use self::gui::Score;
-use self::resources::GlobalAudio;
-use self::stage::Stage;
 
 pub struct SettlementPlugin;
 
@@ -151,11 +145,9 @@ fn settle_start(
     mut settle_start_timer: ResMut<SettleStartTimer>,
     mut next_state: ResMut<NextState<SettlementState>>,
 ) {
-    // println!("计算总分数");
     settle_start_timer.0.tick(time.delta());
 
     if settle_start_timer.0.just_finished() {
-        println!("开始清算");
         next_state.set(SettlementState::DespawnBlock);
     }
 }
@@ -219,7 +211,6 @@ fn time_to_score(
     }
 
     if count_down.0.just_finished() {
-        println!("清算倒计时结束");
         if let Some(time_clear_sound) = audio_handles.time_clear.clone() {
             commands.spawn(AudioBundle {
                 source: time_clear_sound,
@@ -255,7 +246,6 @@ fn update_total_score(
     score.total_score += time_to_score.0 as u32;
     text.sections[0].value = format!("{:0>7}", score.total_score);
 
-    println!("更新总分完成");
     // 清空局部分数
     time_to_score.0 = 0;
 

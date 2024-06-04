@@ -11,3 +11,7 @@ bevy_embedded_assets = "0.10.2"
 kd-tree = "0.6.0"
 rand = "0.8.5"
 typenum = "1.17.0"
+
+[profile.release]
+lto = true
+opt-level = 'z'

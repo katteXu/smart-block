@@ -28,7 +28,7 @@ pub enum HandBlockState {
     Backing,
 }
 
-// 方块组装填
+// 方块组状态
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Copy, States)]
 pub enum BlockGroupState {
     #[default]

@@ -1,20 +1,13 @@
-use std::collections::HashSet;
-use std::time::Duration;
-
 use bevy::math::vec3;
 use bevy::prelude::*;
+use std::collections::HashSet;
 
-use crate::state::{BlockGroupState, GameState, HandBlockState, SettlementState};
-use crate::*;
-
+use crate::gui::{ClearNum, Score};
 use crate::player::{Ladder, Player};
-
-use crate::gui::TextScore;
-
-use self::gui::{ClearNum, Score};
-
-use self::resources::GlobalAudio;
-use self::wall::Wall;
+use crate::resources::GlobalAudio;
+use crate::state::{BlockGroupState, GameState, HandBlockState, SettlementState};
+use crate::wall::Wall;
+use crate::*;
 
 // Block
 #[derive(Component, Debug)]
@@ -79,7 +72,6 @@ impl Plugin for BlockPlugin {
         app.init_state::<HandBlockState>()
             .init_state::<BlockGroupState>()
             .init_resource::<RemoveBlockResource>()
-            .init_resource::<SoundTimer>()
             .add_event::<NoRemoveEvent>()
             .add_systems(
                 Update,
@@ -112,19 +104,9 @@ impl Plugin for BlockPlugin {
     }
 }
 
-#[derive(Resource)]
-struct SoundTimer(Timer);
-impl Default for SoundTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(0.2, TimerMode::Once))
-    }
-}
-
 // 处理方块消除
 fn handle_block_remove(
-    time: Res<Time>,
     mut commands: Commands,
-    mut timer: Local<SoundTimer>,
     audio_handles: Res<GlobalAudio>,
     mut score: ResMut<Score>,
     mut remove_block_resource: ResMut<RemoveBlockResource>,
@@ -207,7 +189,7 @@ fn handle_block_movement(
     hand_block_transform.translation.x = player_transform.translation.x - STEP_SIZE as f32;
 }
 
-// 重置手里方块方向
+// 重置手里方块移动方向
 fn handle_reset_hand_block(mut query: Query<&mut HandBlock, With<HandBlock>>) {
     if query.is_empty() {
         return;
@@ -421,16 +403,6 @@ fn get_target_block_by_player_position(
     }
 
     return res_hashset;
-}
-
-// 播放碰撞方块音效
-fn hand_block_hit_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
-    if let Some(hand_block_hit_block_sound) = audio_handles.hand_block_hit_block.clone() {
-        commands.spawn(AudioBundle {
-            source: hand_block_hit_block_sound,
-            ..default()
-        });
-    }
 }
 
 // 播放下落方块音效

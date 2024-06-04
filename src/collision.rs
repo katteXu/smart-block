@@ -1,11 +1,9 @@
-use std::time::Duration;
-
 use bevy::math::vec3;
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use kd_tree::{KdPoint, KdTree};
+use std::time::Duration;
 
-use crate::block::Direction;
-use crate::block::{Block, HandBlock};
+use crate::block::{Block, Direction, HandBlock};
 use crate::player::Player;
 use crate::resources::GlobalAudio;
 use crate::state::{GameState, HandBlockState};
@@ -391,9 +389,9 @@ fn handle_collision_back_animation(
 
 // 返回声音
 fn hand_block_back_sound(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
-    if let Some(hand_block_black_source) = audio_handles.hand_block_black.clone() {
+    if let Some(player_move_source) = audio_handles.hand_block_black.clone() {
         commands.spawn(AudioBundle {
-            source: hand_block_black_source,
+            source: player_move_source,
             ..default()
         });
     }

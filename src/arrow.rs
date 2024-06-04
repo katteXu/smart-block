@@ -41,6 +41,7 @@ impl Plugin for ArrowPlugin {
     }
 }
 
+// 生成箭头
 fn spawn_arrow(
     mut commands: Commands,
     handle: ResMut<GlobalTextAtlas>,
@@ -69,7 +70,7 @@ fn spawn_arrow(
     ));
 }
 
-// 更新箭头
+// 更新箭头 变换箭头在方块上的指向
 fn update_arrow(
     player_query: Query<&Transform, With<Player>>,
     block_query: Query<&Transform, (With<Block>, Without<Player>)>,

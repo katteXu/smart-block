@@ -10,21 +10,26 @@ use crate::*;
 use crate::animation::AnimationTimer;
 use crate::block::{Block, HandBlock};
 use crate::player::{Ladder, Player};
-use crate::resources::GlobalTextAtlas;
-use crate::wall::Ground;
-use crate::wall::Wall;
-
-use self::resources::GlobalAudio;
-use self::stage::Stage;
+use crate::resources::{GlobalAudio, GlobalTextAtlas};
+use crate::wall::{Ground, Wall};
 
 #[derive(Component)]
 pub struct GameEntity;
+
+// 背景音乐是否播放
+#[derive(Resource)]
+struct BGMPlaying(bool);
+impl Default for BGMPlaying {
+    fn default() -> Self {
+        Self(false)
+    }
+}
 
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app
+        app.init_resource::<BGMPlaying>()
             // 进入主菜单 开始bgm
             .add_systems(OnEnter(GameState::MainMenu), spawn_bgm)
             // 初始化游戏
@@ -38,7 +43,6 @@ impl Plugin for WorldPlugin {
 pub fn init_world(
     mut commands: Commands,
     handle: ResMut<GlobalTextAtlas>,
-    stage: Res<Stage>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     let mut rng = rand::thread_rng();
@@ -80,6 +84,7 @@ pub fn init_world(
         ));
     }
 
+    // 手里方块索引
     let hand_block_index = HAND_BLOCK_INDEX; // rng.gen_range(BLOCK_DISPLAY_RANGE); // HAND_BLOCK_INDEX; // 闪电是15
 
     // 生成手上方块
@@ -150,10 +155,10 @@ pub fn init_world(
     // 测试障碍墙
     let wall_vec2 = vec![
         // 墙体
+        [1, 1, 1, 1],
         [1, 1, 1, 0],
         [1, 1, 0, 0],
         [1, 0, 0, 0],
-        [0, 0, 0, 0],
     ];
 
     for j in 0..wall_vec2.len() {
@@ -257,7 +262,15 @@ pub fn despawn_all_game_entities(
 }
 
 // 生成BGM
-fn spawn_bgm(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
+fn spawn_bgm(
+    audio_handles: Res<GlobalAudio>,
+    mut commands: Commands,
+    mut bgm_playing: Local<BGMPlaying>,
+) {
+    if bgm_playing.0 {
+        return;
+    }
+
     if let Some(bgm) = audio_handles.background_music.clone() {
         commands.spawn(AudioBundle {
             source: bgm,
@@ -267,5 +280,7 @@ fn spawn_bgm(audio_handles: Res<GlobalAudio>, mut commands: Commands) {
             },
             ..default()
         });
+
+        bgm_playing.0 = true;
     }
 }

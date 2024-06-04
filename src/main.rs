@@ -1,5 +1,8 @@
+    #![windows_subsystem = "windows"]
+
 use bevy::{prelude::*, window::close_on_esc};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
+
 use bevy_smart_block::animation::AnimationPlugin;
 use bevy_smart_block::block::{BlockPlugin, HandBlock};
 use bevy_smart_block::camera::MyCameraPlugin;
@@ -13,6 +16,7 @@ use bevy_smart_block::stage::StagePlugin;
 use bevy_smart_block::state::GameState;
 use bevy_smart_block::world::WorldPlugin;
 use bevy_smart_block::*;
+
 fn main() {
     App::new()
         .init_state::<GameState>()
