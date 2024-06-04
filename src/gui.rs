@@ -340,7 +340,7 @@ fn update_score(
     let mut text_score = text_score_query.single_mut();
 
     if score.once_remove_block > 0 {
-        let once_score = score.once_remove_block.pow(2) * ONEC_BLOCK_SCORE;
+        let once_score = score.once_remove_block.pow(2) * ONCE_BLOCK_SCORE;
         score.total_score += once_score;
         if score.once_remove_block > 1 {
             spawn_hight_score(commands, asset_server.load(FONT_PATH), once_score);

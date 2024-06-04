@@ -1,8 +1,9 @@
-    #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 use bevy::{prelude::*, window::close_on_esc};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 
+use bevy_smart_block::alert::AlertPlugin;
 use bevy_smart_block::animation::AnimationPlugin;
 use bevy_smart_block::block::{BlockPlugin, HandBlock};
 use bevy_smart_block::camera::MyCameraPlugin;
@@ -50,6 +51,7 @@ fn main() {
         .add_plugins(AnimationPlugin)
         .add_plugins(SettlementPlugin)
         .add_plugins(StagePlugin)
+        .add_plugins(AlertPlugin)
         .add_systems(Update, close_on_esc)
         .add_systems(
             Update,
