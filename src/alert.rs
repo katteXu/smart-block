@@ -35,8 +35,16 @@ impl Default for DespawnAlertTextTimer {
 }
 
 // 生成提示文案
-fn spawn_game_alert(mut commands: Commands, mut event: EventReader<AlertEvent>) {
+fn spawn_game_alert(
+    mut commands: Commands,
+    mut event: EventReader<AlertEvent>,
+    query: Query<Entity, With<AlertText>>,
+) {
     for e in event.read() {
+        if !query.is_empty() {
+            commands.entity(query.single()).despawn();
+        }
+
         if let Some(text) = &e.0 {
             // 生成提示文案
             commands.spawn((

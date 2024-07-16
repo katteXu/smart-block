@@ -97,12 +97,6 @@ impl Plugin for BlockPlugin {
                 OnExit(HandBlockState::Backing),
                 handle_no_remove_block_by_player.run_if(in_state(GameState::InGame)),
             );
-        // .add_systems(
-        //     Update,
-        //     hand_block_hit_sound
-        //         .run_if(in_state(HandBlockState::Moving))
-        //         .run_if(on_timer(Duration::from_secs_f32(0.2))),
-        // );
     }
 }
 
